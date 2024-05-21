@@ -116,22 +116,20 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseHttpsRedirection();
+
 app.UseStaticFiles();
 
-app.UseWebSockets();
+app.UseRouting();
 
-
-
-app.UseHttpsRedirection();
+app.UseCors();
 
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.UseCors();
+app.UseWebSockets();
 
 app.MapControllers();
-
-app.UseWebSockets();
 
 app.Run();
 
