@@ -9,7 +9,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace rdds.api.Migrations
 {
     /// <inheritdoc />
-    public partial class DeviceUserOneToOne : Migration
+    public partial class NewModel : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -204,13 +204,38 @@ namespace rdds.api.Migrations
                         principalColumn: "MacAddress");
                 });
 
+            migrationBuilder.CreateTable(
+                name: "RoadDatas",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Roll = table.Column<float>(type: "real", nullable: false),
+                    Pitch = table.Column<float>(type: "real", nullable: false),
+                    Yaw = table.Column<float>(type: "real", nullable: false),
+                    Euclidean = table.Column<float>(type: "real", nullable: false),
+                    Velocity = table.Column<float>(type: "real", nullable: false),
+                    Coordinate_Latitude = table.Column<float>(type: "real", nullable: false),
+                    Coordinate_Longitude = table.Column<float>(type: "real", nullable: false),
+                    Timestamp = table.Column<string>(type: "text", nullable: true),
+                    AttemptId = table.Column<int>(type: "integer", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_RoadDatas", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_RoadDatas_Attempts_AttemptId",
+                        column: x => x.AttemptId,
+                        principalTable: "Attempts",
+                        principalColumn: "Id");
+                });
+
             migrationBuilder.InsertData(
                 table: "AspNetRoles",
                 columns: new[] { "Id", "ConcurrencyStamp", "Name", "NormalizedName" },
                 values: new object[,]
                 {
-                    { "0b0157b7-f823-494e-80a4-adf846617609", null, "User", "USER" },
-                    { "a3e2aadd-e69e-43fc-b316-93064eb00175", null, "Admin", "ADMIN" }
+                    { "46c064e1-24ae-4a6a-ac79-b63f937b26b3", null, "User", "USER" },
+                    { "ca1c14d3-e38d-4638-b42a-01873733bcab", null, "Admin", "ADMIN" }
                 });
 
             migrationBuilder.CreateIndex(
@@ -259,6 +284,11 @@ namespace rdds.api.Migrations
                 name: "IX_Devices_AppUserId",
                 table: "Devices",
                 column: "AppUserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_RoadDatas_AttemptId",
+                table: "RoadDatas",
+                column: "AttemptId");
         }
 
         /// <inheritdoc />
@@ -280,10 +310,13 @@ namespace rdds.api.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
-                name: "Attempts");
+                name: "RoadDatas");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");
+
+            migrationBuilder.DropTable(
+                name: "Attempts");
 
             migrationBuilder.DropTable(
                 name: "Devices");

@@ -5,7 +5,7 @@
 </head>
 <body>
     <script>
-        let socket = new WebSocket("ws://localhost:5230/ws");
+        let socket = new WebSocket("wss://localhost:5230/1/1");
 
         socket.onopen = function(e) {
             console.log("[open] Connection established");

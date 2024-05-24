@@ -16,5 +16,7 @@ namespace rdds.api.Models
         public DateTime? FinishedOn { get; set; }
         public string? DeviceId {get; set;}
         public Device? Device { get; set; }
+
+        public List<RoadData> RoadDatas { get; set; } = new List<RoadData>();
     }
 }

@@ -12,8 +12,8 @@ using rdds.api.Data;
 namespace rdds.api.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20240516034928_DeviceUserOneToOne")]
-    partial class DeviceUserOneToOne
+    [Migration("20240523122923_NewModel")]
+    partial class NewModel
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -53,13 +53,13 @@ namespace rdds.api.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "a3e2aadd-e69e-43fc-b316-93064eb00175",
+                            Id = "ca1c14d3-e38d-4638-b42a-01873733bcab",
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         },
                         new
                         {
-                            Id = "0b0157b7-f823-494e-80a4-adf846617609",
+                            Id = "46c064e1-24ae-4a6a-ac79-b63f937b26b3",
                             Name = "User",
                             NormalizedName = "USER"
                         });
@@ -297,6 +297,40 @@ namespace rdds.api.Migrations
                     b.ToTable("Devices");
                 });
 
+            modelBuilder.Entity("rdds.api.Models.RoadData", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("AttemptId")
+                        .HasColumnType("integer");
+
+                    b.Property<float>("Euclidean")
+                        .HasColumnType("real");
+
+                    b.Property<float>("Pitch")
+                        .HasColumnType("real");
+
+                    b.Property<float>("Roll")
+                        .HasColumnType("real");
+
+                    b.Property<string>("Timestamp")
+                        .HasColumnType("text");
+
+                    b.Property<float>("Velocity")
+                        .HasColumnType("real");
+
+                    b.Property<float>("Yaw")
+                        .HasColumnType("real");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AttemptId");
+
+                    b.ToTable("RoadDatas");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -366,6 +400,42 @@ namespace rdds.api.Migrations
                         .IsRequired();
 
                     b.Navigation("AppUser");
+                });
+
+            modelBuilder.Entity("rdds.api.Models.RoadData", b =>
+                {
+                    b.HasOne("rdds.api.Models.Attempt", "Attempt")
+                        .WithMany("RoadDatas")
+                        .HasForeignKey("AttemptId");
+
+                    b.OwnsOne("rdds.api.Models.Coordinate", "Coordinate", b1 =>
+                        {
+                            b1.Property<Guid>("RoadDataId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<float>("Latitude")
+                                .HasColumnType("real");
+
+                            b1.Property<float>("Longitude")
+                                .HasColumnType("real");
+
+                            b1.HasKey("RoadDataId");
+
+                            b1.ToTable("RoadDatas");
+
+                            b1.WithOwner()
+                                .HasForeignKey("RoadDataId");
+                        });
+
+                    b.Navigation("Attempt");
+
+                    b.Navigation("Coordinate")
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("rdds.api.Models.Attempt", b =>
+                {
+                    b.Navigation("RoadDatas");
                 });
 
             modelBuilder.Entity("rdds.api.Models.Device", b =>

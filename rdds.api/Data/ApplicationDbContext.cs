@@ -18,6 +18,7 @@ namespace rdds.api.Data
 
         public DbSet<Device> Devices {get; set;}
         public DbSet<Attempt> Attempts {get; set;}
+        public DbSet<RoadData> RoadDatas { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -37,6 +38,19 @@ namespace rdds.api.Data
                 },
             };
             builder.Entity<IdentityRole>().HasData(roles);
+
+            builder.Entity<RoadData>()
+            .OwnsOne(rd => rd.Coordinate);
+
+            builder.Entity<Device>()
+            .HasMany(a => a.Attempts)
+            .WithOne(rd => rd.Device)
+            .HasForeignKey(rd => rd.DeviceId);
+
+            builder.Entity<Attempt>()
+            .HasMany(a => a.RoadDatas)
+            .WithOne(rd => rd.Attempt)
+            .HasForeignKey(rd => rd.AttemptId);
         }
     }
 }
