@@ -25,9 +25,9 @@ namespace rdds.api.Controllers
 
         
         [HttpGet("{deviceMac}/{attemptId}")]
-        public async Task<IActionResult> GetAllByFilter([FromRoute] string deviceMac, [FromRoute] int attemptId)
+        public async Task<IActionResult> GetAllByFilter([FromRoute] string deviceMac, [FromRoute] int attemptId, [FromQuery] string startDate, [FromQuery] string endDate, [FromQuery] float minVelocity, [FromQuery] float maxVelocity)
         {
-            var roadDataModel = await _roadDataRepo.GetAllByFilterAsync(deviceMac, attemptId);
+            var roadDataModel = await _roadDataRepo.GetAllByFilterAsync(deviceMac, attemptId, startDate, endDate, minVelocity, maxVelocity);
 
             var roadDataDto = roadDataModel.Select(s => s.ToRoadDataDto());
 

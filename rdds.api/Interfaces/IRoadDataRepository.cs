@@ -8,7 +8,7 @@ namespace rdds.api.Interfaces
 {
     public interface IRoadDataRepository
     {
-        Task<List<RoadData>> GetAllByFilterAsync(string deviceMac, int attemptId);
+        Task<List<RoadData>> GetAllByFilterAsync(string deviceMac, int attemptId, string startDate, string endDate, float minVelocity, float maxVelocity);
         Task<bool> CreateAsync(List<RoadData> roadDataModel);
         Task<RoadData?> GetByIdAsync(string id);
     }
