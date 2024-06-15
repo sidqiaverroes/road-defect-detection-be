@@ -8,6 +8,6 @@ namespace rdds.api.Models
 {
     public class AppUser : IdentityUser
     {
-        
+        public ICollection<UserAccess> UserAccesses { get; set; }
     }
 }

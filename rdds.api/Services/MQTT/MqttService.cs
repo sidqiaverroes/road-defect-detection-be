@@ -76,9 +76,14 @@ namespace rdds.api.Services.MQTT
             {
                 _topicToWebSocketsMap[topic] = new List<WebSocket>();
             }
-            _topicToWebSocketsMap[topic].Add(webSocket);
-            _logger.LogInformation($"WebSocket client registered for topic: {topic}");
-            _logger.LogInformation($"Total clients connected: {GetTotalWebSocketCount()}");
+
+            // If the websocket is not already in the list for the topic, add it
+            if (!_topicToWebSocketsMap[topic].Contains(webSocket))
+            {
+                _topicToWebSocketsMap[topic].Add(webSocket);
+                _logger.LogInformation($"WebSocket client registered for topic: {topic}");
+                _logger.LogInformation($"Total clients connected: {GetTotalWebSocketCount()}");
+            }
         }
 
         public void UnregisterWebSocket(WebSocket webSocket)
@@ -90,12 +95,13 @@ namespace rdds.api.Services.MQTT
                     _topicToWebSocketsMap[topic].Remove(webSocket);
                     _logger.LogInformation($"WebSocket client unregistered from topic: {topic}");
 
+                    // Remove the topic if no more clients are registered
                     if (_topicToWebSocketsMap[topic].Count == 0)
                     {
                         _topicToWebSocketsMap.Remove(topic);
                         _logger.LogInformation($"Removed topic: {topic} as no clients are registered.");
                     }
-                    break;
+                    // Do not break the loop here, as other websockets might be associated with the same topic.
                 }
             }
         }

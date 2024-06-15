@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using HiveMQtt.Client;
 using HiveMQtt.Client.Options;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -19,6 +20,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 builder.Logging.SetMinimumLevel(LogLevel.Information);
+
+builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -58,13 +61,15 @@ builder.Services.AddDbContext<ApplicationDbContext>(options => {
 
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
+// AUTH SECTION START
 builder.Services.AddIdentity<AppUser, IdentityRole>(options => {
     options.Password.RequireDigit = true;
     options.Password.RequireLowercase = true;
     options.Password.RequireUppercase = true;
 
 })
-.AddEntityFrameworkStores<ApplicationDbContext>();
+.AddEntityFrameworkStores<ApplicationDbContext>()
+.AddDefaultTokenProviders();;
 
 builder.Services.AddAuthentication(options =>
 {
@@ -88,7 +93,9 @@ builder.Services.AddAuthentication(options =>
         )
     };
 });
+// AUTH SECTION END
 
+builder.Services.AddScoped<IAccountRepository, AccountRepository>();
 builder.Services.AddScoped<IDeviceRepository, DeviceRepository>();
 builder.Services.AddScoped<IAttemptRepository, AttemptRepository>();
 builder.Services.AddScoped<IRoadDataRepository, RoadDataRepository>();
@@ -108,6 +115,9 @@ builder.Services.AddScoped<MqttService>();
 builder.Services.AddHostedService<MqttService>();
 
 var app = builder.Build();
+
+// Initialize database method
+DbInitializer.InitializeDb(app);
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

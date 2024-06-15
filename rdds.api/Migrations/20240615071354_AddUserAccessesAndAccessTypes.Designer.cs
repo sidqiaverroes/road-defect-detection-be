@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using rdds.api.Data;
@@ -11,9 +12,11 @@ using rdds.api.Data;
 namespace rdds.api.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240615071354_AddUserAccessesAndAccessTypes")]
+    partial class AddUserAccessesAndAccessTypes
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -50,13 +53,13 @@ namespace rdds.api.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "76df5571-2a67-4157-816a-faa3a6829c24",
+                            Id = "48c1eb61-f7a4-4d30-8e69-d90159ddafe5",
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         },
                         new
                         {
-                            Id = "40a43151-dd52-462e-a8d7-e424d8b22f34",
+                            Id = "b04ed1da-6fc5-48e9-a972-ea9c119d6275",
                             Name = "User",
                             NormalizedName = "USER"
                         });
@@ -183,28 +186,6 @@ namespace rdds.api.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("AccessTypes");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Name = "read"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Name = "write"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Name = "update"
-                        },
-                        new
-                        {
-                            Id = 4,
-                            Name = "delete"
-                        });
                 });
 
             modelBuilder.Entity("rdds.api.Models.AppUser", b =>

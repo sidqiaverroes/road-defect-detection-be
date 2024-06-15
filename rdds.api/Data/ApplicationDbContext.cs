@@ -19,6 +19,8 @@ namespace rdds.api.Data
         public DbSet<Device> Devices {get; set;}
         public DbSet<Attempt> Attempts {get; set;}
         public DbSet<RoadData> RoadDatas { get; set; }
+        public DbSet<AccessType> AccessTypes { get; set; }
+        public DbSet<UserAccess> UserAccesses { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -37,7 +39,17 @@ namespace rdds.api.Data
                     NormalizedName = "USER"
                 },
             };
+
+            List<AccessType> accessTypes = new List<AccessType>
+            {
+                new AccessType { Id = 1, Name = "read" },
+                new AccessType { Id = 2, Name = "write" },
+                new AccessType { Id = 3, Name = "update" },
+                new AccessType { Id = 4, Name = "delete" }
+            };
+            
             builder.Entity<IdentityRole>().HasData(roles);
+            builder.Entity<AccessType>().HasData(accessTypes);
 
             builder.Entity<RoadData>()
             .OwnsOne(rd => rd.Coordinate);
@@ -51,6 +63,20 @@ namespace rdds.api.Data
             .HasMany(a => a.RoadDatas)
             .WithOne(rd => rd.Attempt)
             .HasForeignKey(rd => rd.AttemptId);
+
+            // Configure many-to-many relationship between AppUser and AccessType via UserAccess
+            builder.Entity<UserAccess>()
+                .HasKey(ua => new { ua.UserId, ua.AccessTypeId });
+
+            builder.Entity<UserAccess>()
+                .HasOne(ua => ua.User)
+                .WithMany(u => u.UserAccesses)
+                .HasForeignKey(ua => ua.UserId);
+
+            builder.Entity<UserAccess>()
+                .HasOne(ua => ua.AccessType)
+                .WithMany(at => at.UserAccesses)
+                .HasForeignKey(ua => ua.AccessTypeId);
         }
     }
 }
