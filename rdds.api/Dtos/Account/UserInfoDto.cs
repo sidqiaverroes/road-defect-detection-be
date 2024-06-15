@@ -7,15 +7,16 @@ namespace rdds.api.Dtos.Account
 {
     public class UserDto
     {
-        public string? Id { get; set; }
-        public string? UserName { get; set; }
-        public string? Email { get; set; }
-        public List<UserAccessDto>? UserAccesses { get; set; }
+        public string Id { get; set; }
+        public string UserName { get; set; }
+        public string Email { get; set; }
+        public AccessTypeDto AccessType { get; set; }
     }
 
-    public class UserAccessDto
+    public class AccessTypeDto
     {
-        public int AccessTypeId { get; set; }
-        public string? AccessTypeName { get; set; }
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public ICollection<string> Accesses { get; set; }
     }
 }

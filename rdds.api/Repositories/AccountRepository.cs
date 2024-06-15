@@ -23,34 +23,40 @@ namespace rdds.api.Repositories
         }
 
         public async Task<List<UserDto>> GetAllAsync()
-    {
-        var usersInRole = await _userManager.GetUsersInRoleAsync("User");
-
-        if (usersInRole == null || !usersInRole.Any())
         {
-            return new List<UserDto>(); // Return an empty list if usersInRole is null or empty
-        }
+            var usersInRole = await _userManager.GetUsersInRoleAsync("User");
 
-        var userIdsInRole = usersInRole.Select(u => u.Id).ToList();
+            if (usersInRole == null || !usersInRole.Any())
+            {
+                return new List<UserDto>();
+            }
 
-        var usersWithAccessTypes = await _context.Users
-            .Where(u => userIdsInRole.Contains(u.Id))
-            .Select(u => new UserDto
+            var userIdsInRole = usersInRole.Select(u => u.Id).ToList();
+
+            var usersWithAccessTypes = await _context.Users
+                .Where(u => userIdsInRole.Contains(u.Id))
+                .Include(u => u.AccessType)
+                .ToListAsync();
+
+            var userDtos = usersWithAccessTypes.Select(u => new UserDto
             {
                 Id = u.Id,
                 UserName = u.UserName,
                 Email = u.Email,
-                UserAccesses = u.UserAccesses.Select(ua => new UserAccessDto
+                AccessType = new AccessTypeDto
                 {
-                    AccessTypeId = ua.AccessTypeId,
-                    AccessTypeName = ua.AccessType.Name
-                }).ToList()
-            })
-            .ToListAsync();
+                    Id = u.AccessType.Id,
+                    Name = u.AccessType.Name,
+                    Accesses = u.AccessType.Accesses
+                }
+            }).ToList();
 
-        return usersWithAccessTypes;
-    }
+            return userDtos;
+        }
 
-
+        public Task UpdateUserAccessesAsync(string userId, List<int> accessTypeIds)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

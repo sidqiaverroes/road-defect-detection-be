@@ -20,7 +20,6 @@ namespace rdds.api.Data
         public DbSet<Attempt> Attempts {get; set;}
         public DbSet<RoadData> RoadDatas { get; set; }
         public DbSet<AccessType> AccessTypes { get; set; }
-        public DbSet<UserAccess> UserAccesses { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -42,10 +41,8 @@ namespace rdds.api.Data
 
             List<AccessType> accessTypes = new List<AccessType>
             {
-                new AccessType { Id = 1, Name = "read" },
-                new AccessType { Id = 2, Name = "write" },
-                new AccessType { Id = 3, Name = "update" },
-                new AccessType { Id = 4, Name = "delete" }
+                new AccessType { Id = 1, Name = "Admin", Accesses = new List<string> { "read", "write", "update", "delete" } },
+                new AccessType { Id = 2, Name = "User", Accesses = new List<string> { "read" } }
             };
             
             builder.Entity<IdentityRole>().HasData(roles);
@@ -63,20 +60,19 @@ namespace rdds.api.Data
             .HasMany(a => a.RoadDatas)
             .WithOne(rd => rd.Attempt)
             .HasForeignKey(rd => rd.AttemptId);
+            
 
-            // Configure many-to-many relationship between AppUser and AccessType via UserAccess
-            builder.Entity<UserAccess>()
-                .HasKey(ua => new { ua.UserId, ua.AccessTypeId });
+            // Configure many-to-many relationship between AppUser and AccessType
+            builder.Entity<AppUser>()
+            .HasOne(u => u.AccessType)
+            .WithMany(a => a.Users)
+            .HasForeignKey(u => u.AccessTypeId)
+            .OnDelete(DeleteBehavior.Restrict);
 
-            builder.Entity<UserAccess>()
-                .HasOne(ua => ua.User)
-                .WithMany(u => u.UserAccesses)
-                .HasForeignKey(ua => ua.UserId);
-
-            builder.Entity<UserAccess>()
-                .HasOne(ua => ua.AccessType)
-                .WithMany(at => at.UserAccesses)
-                .HasForeignKey(ua => ua.AccessTypeId);
+            builder.Entity<AccessType>()
+            .HasMany(a => a.Users)
+            .WithOne(rd => rd.AccessType)
+            .HasForeignKey(rd => rd.AccessTypeId);
         }
     }
 }

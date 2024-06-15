@@ -12,7 +12,7 @@ using rdds.api.Data;
 namespace rdds.api.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20240523122923_NewModel")]
+    [Migration("20240615140407_NewModel")]
     partial class NewModel
     {
         /// <inheritdoc />
@@ -53,13 +53,13 @@ namespace rdds.api.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "ca1c14d3-e38d-4638-b42a-01873733bcab",
+                            Id = "cccc8768-5cbe-4f39-9f8d-0dd52fdd6f8a",
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         },
                         new
                         {
-                            Id = "46c064e1-24ae-4a6a-ac79-b63f937b26b3",
+                            Id = "5db060cd-6514-4449-8797-b580e626891e",
                             Name = "User",
                             NormalizedName = "USER"
                         });
@@ -171,12 +171,49 @@ namespace rdds.api.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("rdds.api.Models.AccessType", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string[]>("Accesses")
+                        .HasColumnType("text[]");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AccessTypes");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Accesses = new[] { "read", "write", "update", "delete" },
+                            Name = "Admin"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Accesses = new[] { "read" },
+                            Name = "User"
+                        });
+                });
+
             modelBuilder.Entity("rdds.api.Models.AppUser", b =>
                 {
                     b.Property<string>("Id")
                         .HasColumnType("text");
 
                     b.Property<int>("AccessFailedCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("AccessTypeId")
                         .HasColumnType("integer");
 
                     b.Property<string>("ConcurrencyStamp")
@@ -224,6 +261,8 @@ namespace rdds.api.Migrations
                         .HasColumnType("character varying(256)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("AccessTypeId");
 
                     b.HasIndex("NormalizedEmail")
                         .HasDatabaseName("EmailIndex");
@@ -382,6 +421,17 @@ namespace rdds.api.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("rdds.api.Models.AppUser", b =>
+                {
+                    b.HasOne("rdds.api.Models.AccessType", "AccessType")
+                        .WithMany("Users")
+                        .HasForeignKey("AccessTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("AccessType");
+                });
+
             modelBuilder.Entity("rdds.api.Models.Attempt", b =>
                 {
                     b.HasOne("rdds.api.Models.Device", "Device")
@@ -431,6 +481,11 @@ namespace rdds.api.Migrations
 
                     b.Navigation("Coordinate")
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("rdds.api.Models.AccessType", b =>
+                {
+                    b.Navigation("Users");
                 });
 
             modelBuilder.Entity("rdds.api.Models.Attempt", b =>

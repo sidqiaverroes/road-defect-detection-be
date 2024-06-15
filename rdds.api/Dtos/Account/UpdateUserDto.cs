@@ -5,12 +5,19 @@ using System.Threading.Tasks;
 
 namespace rdds.api.Dtos.Account
 {
-    public class UpdateUserDto
+    public class UpdateAdminDto
     {
         public string Username { get; set; }
 
         public string CurrentPassword { get; set; }
 
         public string NewPassword { get; set; }
+    }
+
+    public class UpdateUserDetailsDto
+    {
+        public string NewPassword { get; set; }
+        public string NewUsername { get; set; }
+        public List<int> AccessTypeIds { get; set; }
     }
 }

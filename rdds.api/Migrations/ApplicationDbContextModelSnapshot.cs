@@ -50,13 +50,13 @@ namespace rdds.api.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "76df5571-2a67-4157-816a-faa3a6829c24",
+                            Id = "cccc8768-5cbe-4f39-9f8d-0dd52fdd6f8a",
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         },
                         new
                         {
-                            Id = "40a43151-dd52-462e-a8d7-e424d8b22f34",
+                            Id = "5db060cd-6514-4449-8797-b580e626891e",
                             Name = "User",
                             NormalizedName = "USER"
                         });
@@ -176,6 +176,9 @@ namespace rdds.api.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string[]>("Accesses")
+                        .HasColumnType("text[]");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
@@ -188,22 +191,14 @@ namespace rdds.api.Migrations
                         new
                         {
                             Id = 1,
-                            Name = "read"
+                            Accesses = new[] { "read", "write", "update", "delete" },
+                            Name = "Admin"
                         },
                         new
                         {
                             Id = 2,
-                            Name = "write"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Name = "update"
-                        },
-                        new
-                        {
-                            Id = 4,
-                            Name = "delete"
+                            Accesses = new[] { "read" },
+                            Name = "User"
                         });
                 });
 
@@ -213,6 +208,9 @@ namespace rdds.api.Migrations
                         .HasColumnType("text");
 
                     b.Property<int>("AccessFailedCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("AccessTypeId")
                         .HasColumnType("integer");
 
                     b.Property<string>("ConcurrencyStamp")
@@ -260,6 +258,8 @@ namespace rdds.api.Migrations
                         .HasColumnType("character varying(256)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("AccessTypeId");
 
                     b.HasIndex("NormalizedEmail")
                         .HasDatabaseName("EmailIndex");
@@ -367,24 +367,6 @@ namespace rdds.api.Migrations
                     b.ToTable("RoadDatas");
                 });
 
-            modelBuilder.Entity("rdds.api.Models.UserAccess", b =>
-                {
-                    b.Property<string>("UserId")
-                        .HasColumnType("text");
-
-                    b.Property<int>("AccessTypeId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Id")
-                        .HasColumnType("integer");
-
-                    b.HasKey("UserId", "AccessTypeId");
-
-                    b.HasIndex("AccessTypeId");
-
-                    b.ToTable("UserAccesses");
-                });
-
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -434,6 +416,17 @@ namespace rdds.api.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("rdds.api.Models.AppUser", b =>
+                {
+                    b.HasOne("rdds.api.Models.AccessType", "AccessType")
+                        .WithMany("Users")
+                        .HasForeignKey("AccessTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("AccessType");
                 });
 
             modelBuilder.Entity("rdds.api.Models.Attempt", b =>
@@ -487,33 +480,9 @@ namespace rdds.api.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("rdds.api.Models.UserAccess", b =>
-                {
-                    b.HasOne("rdds.api.Models.AccessType", "AccessType")
-                        .WithMany("UserAccesses")
-                        .HasForeignKey("AccessTypeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("rdds.api.Models.AppUser", "User")
-                        .WithMany("UserAccesses")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("AccessType");
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("rdds.api.Models.AccessType", b =>
                 {
-                    b.Navigation("UserAccesses");
-                });
-
-            modelBuilder.Entity("rdds.api.Models.AppUser", b =>
-                {
-                    b.Navigation("UserAccesses");
+                    b.Navigation("Users");
                 });
 
             modelBuilder.Entity("rdds.api.Models.Attempt", b =>

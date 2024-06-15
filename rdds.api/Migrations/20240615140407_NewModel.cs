@@ -15,6 +15,20 @@ namespace rdds.api.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
+                name: "AccessTypes",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    Accesses = table.Column<string[]>(type: "text[]", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AccessTypes", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "AspNetRoles",
                 columns: table => new
                 {
@@ -33,6 +47,7 @@ namespace rdds.api.Migrations
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "text", nullable: false),
+                    AccessTypeId = table.Column<int>(type: "integer", nullable: false),
                     UserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
@@ -51,6 +66,12 @@ namespace rdds.api.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_AspNetUsers", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_AspNetUsers_AccessTypes_AccessTypeId",
+                        column: x => x.AccessTypeId,
+                        principalTable: "AccessTypes",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -230,12 +251,21 @@ namespace rdds.api.Migrations
                 });
 
             migrationBuilder.InsertData(
+                table: "AccessTypes",
+                columns: new[] { "Id", "Accesses", "Name" },
+                values: new object[,]
+                {
+                    { 1, new[] { "read", "write", "update", "delete" }, "Admin" },
+                    { 2, new[] { "read" }, "User" }
+                });
+
+            migrationBuilder.InsertData(
                 table: "AspNetRoles",
                 columns: new[] { "Id", "ConcurrencyStamp", "Name", "NormalizedName" },
                 values: new object[,]
                 {
-                    { "46c064e1-24ae-4a6a-ac79-b63f937b26b3", null, "User", "USER" },
-                    { "ca1c14d3-e38d-4638-b42a-01873733bcab", null, "Admin", "ADMIN" }
+                    { "5db060cd-6514-4449-8797-b580e626891e", null, "User", "USER" },
+                    { "cccc8768-5cbe-4f39-9f8d-0dd52fdd6f8a", null, "Admin", "ADMIN" }
                 });
 
             migrationBuilder.CreateIndex(
@@ -268,6 +298,11 @@ namespace rdds.api.Migrations
                 name: "EmailIndex",
                 table: "AspNetUsers",
                 column: "NormalizedEmail");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AspNetUsers_AccessTypeId",
+                table: "AspNetUsers",
+                column: "AccessTypeId");
 
             migrationBuilder.CreateIndex(
                 name: "UserNameIndex",
@@ -323,6 +358,9 @@ namespace rdds.api.Migrations
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");
+
+            migrationBuilder.DropTable(
+                name: "AccessTypes");
         }
     }
 }

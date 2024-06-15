@@ -45,9 +45,14 @@ namespace rdds.api.Controllers
                 return Unauthorized("You are not Admin.");
             }
 
-            var userList = await _accountRepo.GetAllAsync();
+            var usersWithRole = await _accountRepo.GetAllAsync();
 
-            return Ok(userList);
+            if (usersWithRole == null || !usersWithRole.Any())
+            {
+                return NotFound("No users found with the specified role.");
+            }
+
+            return Ok(usersWithRole);
         }
 
         [Authorize]
@@ -150,39 +155,8 @@ namespace rdds.api.Controllers
         }
 
         [Authorize]
-        [HttpPut("update-username/{userId}")]
-        public async Task<IActionResult> UpdateUsername(string userId, [FromBody] UpdateUserDto model)
-        {
-            var username = User.GetUsername();
-            var authuser = await _userManager.FindByNameAsync(username);
-            if (authuser == null)
-            {
-                return Unauthorized("You are not registered.");
-            }
-            if(!await _userManager.IsInRoleAsync(authuser, "Admin"))
-            {
-                return Unauthorized("You are not Admin.");
-            }
-
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            var user = await _userManager.FindByIdAsync(userId);
-
-            if (user == null)
-                return NotFound("User not found");
-
-            var result = await _userManager.SetUserNameAsync(user, model.Username);
-
-            if (!result.Succeeded)
-                return StatusCode(500, result.Errors);
-
-            return Ok("Username updated successfully");
-        }
-
-        [Authorize]
         [HttpPut("update-admin")]
-        public async Task<IActionResult> UpdateAdmin([FromBody] UpdateUserDto model)
+        public async Task<IActionResult> UpdateAdmin([FromBody] UpdateAdminDto model)
         {
             var username = User.GetUsername();
             var authuser = await _userManager.FindByNameAsync(username);
@@ -223,41 +197,69 @@ namespace rdds.api.Controllers
         }
 
         [Authorize]
-        [HttpPut("update-password/{userId}")]
-        public async Task<IActionResult> UpdateUserPassword(string userId, [FromBody] UpdateUserDto model)
+        [HttpPut("update-user-details/{userId}")]
+        public async Task<IActionResult> UpdateUserDetails(string userId, [FromBody] UpdateUserDetailsDto model)
         {
             var username = User.GetUsername();
-            var authuser = await _userManager.FindByNameAsync(username);
-            if (authuser == null)
+            var authUser = await _userManager.FindByNameAsync(username);
+            
+            if (authUser == null)
             {
                 return Unauthorized("You are not registered.");
             }
-            if(!await _userManager.IsInRoleAsync(authuser, "Admin"))
+            
+            if (!await _userManager.IsInRoleAsync(authUser, "Admin"))
             {
                 return Unauthorized("You are not Admin.");
             }
 
             if (!ModelState.IsValid)
+            {
                 return BadRequest(ModelState);
+            }
 
             var user = await _userManager.FindByIdAsync(userId);
-
-            if (user == null)
-                return NotFound("User not found");
             
-            if (await _userManager.IsInRoleAsync(user, "Admin"))
-                return BadRequest("This user's password cannot be changed this way.");
+            if (user == null)
+            {
+                return NotFound("User not found");
+            }
 
-            // Generate a reset token for the user
-            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            // Update Password
+            if (!string.IsNullOrEmpty(model.NewPassword))
+            {
+                if (await _userManager.IsInRoleAsync(user, "Admin"))
+                {
+                    return BadRequest("This user's password cannot be changed this way.");
+                }
 
-            // Reset the user's password without requiring the current password
-            var result = await _userManager.ResetPasswordAsync(user, token, model.NewPassword);
+                var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+                var result = await _userManager.ResetPasswordAsync(user, token, model.NewPassword);
 
-            if (!result.Succeeded)
-                return StatusCode(500, result.Errors);
+                if (!result.Succeeded)
+                {
+                    return StatusCode(500, result.Errors);
+                }
+            }
 
-            return Ok("Password updated successfully");
+            // Update Username
+            if (!string.IsNullOrEmpty(model.NewUsername))
+            {
+                var result = await _userManager.SetUserNameAsync(user, model.NewUsername);
+
+                if (!result.Succeeded)
+                {
+                    return StatusCode(500, result.Errors);
+                }
+            }
+
+            // Update UserAccesses
+            if (model.AccessTypeIds != null && model.AccessTypeIds.Any())
+            {
+                await _accountRepo.UpdateUserAccessesAsync(userId, model.AccessTypeIds);
+            }
+
+            return Ok("User details updated successfully");
         }
 
         [Authorize]
