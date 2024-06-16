@@ -9,5 +9,6 @@ namespace rdds.api.Dtos.Attempt
     {
         public string? Title { get; set; }
         public string? Description { get; set; }
+        public int? RoadCategoryId { get; set; }
     }
 }

@@ -20,6 +20,7 @@ namespace rdds.api.Data
         public DbSet<Attempt> Attempts {get; set;}
         public DbSet<RoadData> RoadDatas { get; set; }
         public DbSet<AccessType> AccessTypes { get; set; }
+        public DbSet<RoadCategory> RoadCategories { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -73,6 +74,12 @@ namespace rdds.api.Data
             .HasMany(a => a.Users)
             .WithOne(rd => rd.AccessType)
             .HasForeignKey(rd => rd.AccessTypeId);
+
+            builder.Entity<RoadCategory>()
+            .HasMany(rc => rc.Attempts)
+            .WithOne(a => a.RoadCategory)
+            .HasForeignKey(a => a.RoadCategoryId)
+            .OnDelete(DeleteBehavior.SetNull);
         }
     }
 }

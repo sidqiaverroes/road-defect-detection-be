@@ -1,4 +1,5 @@
 // AccessTypesController.cs
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using rdds.api.Dtos.AccessType;
 using rdds.api.Interfaces;
@@ -22,6 +23,7 @@ namespace rdds.api.Controllers
             _accessTypeRepository = accessTypeRepository;
         }
 
+        [Authorize]
         [HttpGet]
         public async Task<IActionResult> GetAllAccessTypes()
         {
@@ -31,6 +33,7 @@ namespace rdds.api.Controllers
             return Ok(accessTypeDto);
         }
 
+        [Authorize]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetAccessTypeById(int id)
         {
@@ -42,6 +45,7 @@ namespace rdds.api.Controllers
             return Ok(accessType.ToAccessTypeDto());
         }
 
+        [Authorize]
         [HttpPost]
         public async Task<IActionResult> CreateAccessType([FromBody] CreateAccessTypeDto newAccessTypeDto)
         {
@@ -64,6 +68,7 @@ namespace rdds.api.Controllers
             return CreatedAtAction(nameof(GetAccessTypeById), new { id = createdAccessType.Id }, createdAccessType);
         }
 
+        [Authorize]
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateAccessType([FromRoute] int id, [FromBody] UpdateAccessTypeDto updateDto)
         {
@@ -94,7 +99,7 @@ namespace rdds.api.Controllers
             return Ok(updatedAccessType.ToAccessTypeDto());
         }
 
-
+        [Authorize]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteAccessType(int id)
         {

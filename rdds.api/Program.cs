@@ -101,6 +101,7 @@ builder.Services.AddScoped<IAttemptRepository, AttemptRepository>();
 builder.Services.AddScoped<IRoadDataRepository, RoadDataRepository>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IAccessTypeRepository, AccessTypeRepository>();
+builder.Services.AddScoped<IRoadCategoryRepository, RoadCategoryRepository>();
 builder.Services.AddSingleton(sp =>
 {
     var options = new HiveMQClientOptions

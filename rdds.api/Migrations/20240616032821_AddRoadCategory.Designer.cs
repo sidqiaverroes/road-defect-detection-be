@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using rdds.api.Data;
@@ -12,9 +13,11 @@ using rdds.api.Data;
 namespace rdds.api.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240616032821_AddRoadCategory")]
+    partial class AddRoadCategory
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -51,13 +54,13 @@ namespace rdds.api.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "3b621712-e520-4c86-be66-fea9f05693fb",
+                            Id = "7780bf77-8e9e-4597-bdda-dbe09f1f5d96",
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         },
                         new
                         {
-                            Id = "d0c86b3f-52a5-4789-88cf-5c372eb7fdac",
+                            Id = "01d0ad78-f2be-48b7-8178-f14819763f54",
                             Name = "User",
                             NormalizedName = "USER"
                         });
@@ -351,8 +354,8 @@ namespace rdds.api.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<float>("TotalLength")
-                        .HasColumnType("real");
+                    b.Property<double>("TotalLength")
+                        .HasColumnType("double precision");
 
                     b.HasKey("Id");
 

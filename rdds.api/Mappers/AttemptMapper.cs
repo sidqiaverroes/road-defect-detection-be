@@ -40,6 +40,7 @@ namespace rdds.api.Mappers
             {
                 Title = attemptDto.Title,
                 Description = attemptDto.Description,
+                RoadCategoryId = attemptDto.RoadCategoryId
             };
         }
 
