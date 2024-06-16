@@ -22,16 +22,18 @@ namespace rdds.api.Controllers
         private readonly ITokenService _tokenService;
         private readonly SignInManager<AppUser> _signinManager;
         private readonly IAccountRepository _accountRepo;
-        public AccountController(UserManager<AppUser> userManager, ITokenService tokenService, SignInManager<AppUser> signInManager, IAccountRepository accountRepo)
+        private readonly IAccessTypeRepository _accessTypeRepo;
+        public AccountController(UserManager<AppUser> userManager, ITokenService tokenService, SignInManager<AppUser> signInManager, IAccountRepository accountRepo, IAccessTypeRepository accessTypeRepo)
         {
             _userManager = userManager;
             _tokenService = tokenService;
             _signinManager = signInManager;
             _accountRepo = accountRepo;
+            _accessTypeRepo = accessTypeRepo;
         }
 
         [Authorize]
-        [HttpGet("get-all-users")]
+        [HttpGet]
         public async Task<IActionResult> GetAll()
         {
             var username = User.GetUsername();
@@ -89,7 +91,7 @@ namespace rdds.api.Controllers
             {
                 return Unauthorized("You are not registered.");
             }
-            if(!await _userManager.IsInRoleAsync(authuser, "Admin"))
+            if (!await _userManager.IsInRoleAsync(authuser, "Admin"))
             {
                 return Unauthorized("You are not Admin.");
             }
@@ -97,10 +99,18 @@ namespace rdds.api.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
+            // Retrieve the AccessType for "User"
+            var userAccessType = await _accessTypeRepo.GetAccessTypeByNameAsync("User");
+            if (userAccessType == null)
+            {
+                return StatusCode(500, "Default AccessType 'User' not found.");
+            }
+
             var appUser = new AppUser
             {
                 UserName = registerDto.Username,
-                Email = registerDto.Email
+                Email = registerDto.Email,
+                AccessTypeId = userAccessType.Id // Assign the AccessTypeId here
             };
 
             var createdUser = await _userManager.CreateAsync(appUser, registerDto.Password);
@@ -128,7 +138,8 @@ namespace rdds.api.Controllers
             {
                 return StatusCode(500, createdUser.Errors);
             }
-        }
+}
+
 
         [HttpPost("login")]
         public async Task<IActionResult> Login(LoginDto loginDto)
@@ -202,24 +213,19 @@ namespace rdds.api.Controllers
         {
             var username = User.GetUsername();
             var authUser = await _userManager.FindByNameAsync(username);
-            
+
             if (authUser == null)
             {
                 return Unauthorized("You are not registered.");
             }
-            
+
             if (!await _userManager.IsInRoleAsync(authUser, "Admin"))
             {
                 return Unauthorized("You are not Admin.");
             }
 
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
             var user = await _userManager.FindByIdAsync(userId);
-            
+
             if (user == null)
             {
                 return NotFound("User not found");
@@ -253,10 +259,10 @@ namespace rdds.api.Controllers
                 }
             }
 
-            // Update UserAccesses
-            if (model.AccessTypeIds != null && model.AccessTypeIds.Any())
+            // Update User Access Type
+            if (model.AccessTypeId > 0)
             {
-                await _accountRepo.UpdateUserAccessesAsync(userId, model.AccessTypeIds);
+                await _accountRepo.UpdateUserAccessAsync(userId, model.AccessTypeId);
             }
 
             return Ok("User details updated successfully");

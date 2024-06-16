@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using rdds.api.Dtos.AccessType;
 
 namespace rdds.api.Dtos.Account
 {
@@ -11,12 +12,5 @@ namespace rdds.api.Dtos.Account
         public string UserName { get; set; }
         public string Email { get; set; }
         public AccessTypeDto AccessType { get; set; }
-    }
-
-    public class AccessTypeDto
-    {
-        public int Id { get; set; }
-        public string Name { get; set; }
-        public ICollection<string> Accesses { get; set; }
     }
 }

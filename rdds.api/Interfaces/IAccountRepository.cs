@@ -9,7 +9,7 @@ namespace rdds.api.Interfaces
     public interface IAccountRepository
     {
         Task<List<UserDto>> GetAllAsync();
-        Task UpdateUserAccessesAsync(string userId, List<int> accessTypeIds);
+        Task UpdateUserAccessAsync(string userId, int accessTypeId);
 
     }
 }

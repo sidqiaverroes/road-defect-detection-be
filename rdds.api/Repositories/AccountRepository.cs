@@ -8,7 +8,7 @@ using rdds.api.Interfaces;
 using rdds.api.Models;
 using rdds.api.Dtos.Account;
 using Microsoft.AspNetCore.Identity;
-using rdds.api.Mappers;
+using rdds.api.Dtos.AccessType;
 
 namespace rdds.api.Repositories
 {
@@ -54,9 +54,28 @@ namespace rdds.api.Repositories
             return userDtos;
         }
 
-        public Task UpdateUserAccessesAsync(string userId, List<int> accessTypeIds)
+        public async Task UpdateUserAccessAsync(string userId, int accessTypeId)
         {
-            throw new NotImplementedException();
+           
+            var user = await _context.Users.FindAsync(userId);
+
+            if (user == null)
+            {
+                throw new ArgumentException("User not found", nameof(userId));
+            }
+
+            var accessType = await _context.AccessTypes.FindAsync(accessTypeId);
+
+            if (accessType == null)
+            {
+                throw new ArgumentException("AccessType not found", nameof(accessTypeId));
+            }
+
+            user.AccessTypeId = accessTypeId;
+
+            await _context.SaveChangesAsync();
+        
         }
+
     }
 }
