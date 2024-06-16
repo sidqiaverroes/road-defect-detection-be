@@ -5,7 +5,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using rdds.api.Data;
+using rdds.api.Dtos.RoadData;
 using rdds.api.Interfaces;
+using rdds.api.Mappers;
 using rdds.api.Models;
 
 namespace rdds.api.Repositories
@@ -19,62 +21,63 @@ namespace rdds.api.Repositories
             _context = context;
         }
 
-        public async Task<bool> CreateAsync(List<RoadData> roadDataModel)
+        public async Task<bool> CreateAsync(IEnumerable<CreateRoadDataDto> roadDataDtos, int attemptId)
         {
-            await _context.RoadDatas.AddRangeAsync(roadDataModel);
-            return await _context.SaveChangesAsync() > 0;
+            try
+            {
+                // Convert CreateRoadDataDto to RoadData entities
+                var roadDataModels = roadDataDtos.Select(dto => dto.ToRoadDataFromCreate(attemptId)).ToList();
+
+                // Add range of roadDataModels to context and save changes
+                await _context.RoadDatas.AddRangeAsync(roadDataModels);
+                await _context.SaveChangesAsync();
+
+                return true;
+            }
+            catch (ArgumentException ex)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
         }
 
-        public async Task<List<RoadData>> GetAllByFilterAsync(string deviceMac, int attemptId, string startDate="", string endDate="", float minVelocity=0, float maxVelocity=0)
+        public async Task<List<RoadData>> GetAllByFilterAsync(string deviceMac, int attemptId, string startDate = "", string endDate = "", float minVelocity = 0, float maxVelocity = 0)
         {
-            var query = _context.RoadDatas.Where(rd => rd.AttemptId == attemptId)
-            .Include(rd => rd.Attempt).Where(a => a.Attempt.DeviceId == deviceMac);
+            // Parse startDate and endDate strings to DateTime objects
+            DateTime? startDateTime = null;
+            DateTime? endDateTime = null;
 
-            // Apply optional filters
-            if (!string.IsNullOrEmpty(startDate))
+            if (!string.IsNullOrEmpty(startDate) && DateTime.TryParseExact(startDate, "yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedStartDate))
             {
-                DateTime parsedStartDate;
-                if (DateTime.TryParseExact(startDate, "yy-MM-dd HH:mm:ss.ff", CultureInfo.InvariantCulture, DateTimeStyles.None, out parsedStartDate))
-                {
-                    query = query.Where(rd => DateTime.ParseExact(rd.Timestamp, "yy-MM-dd HH:mm:ss.ff", CultureInfo.InvariantCulture) >= parsedStartDate);
-                }
-                else
-                {
-                    // Handle invalid startDate format
-                    return null; // Or throw an exception, return an empty list, etc.
-                }
+                startDateTime = parsedStartDate;
             }
 
-            if (!string.IsNullOrEmpty(endDate))
+            if (!string.IsNullOrEmpty(endDate) && DateTime.TryParseExact(endDate, "yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedEndDate))
             {
-                DateTime parsedEndDate;
-                if (DateTime.TryParseExact(endDate, "yy-MM-dd HH:mm:ss.ff", CultureInfo.InvariantCulture, DateTimeStyles.None, out parsedEndDate))
-                {
-                    query = query.Where(rd => DateTime.ParseExact(rd.Timestamp, "yy-MM-dd HH:mm:ss.ff", CultureInfo.InvariantCulture) <= parsedEndDate);
-                }
-                else
-                {
-                    // Handle invalid endDate format
-                    return null; // Or throw an exception, return an empty list, etc.
-                }
+                endDateTime = parsedEndDate;
             }
 
-            if (minVelocity > 0)
+            // Validate end date is greater than start date
+            if (startDateTime.HasValue && endDateTime.HasValue && endDateTime <= startDateTime)
             {
-                query = query.Where(rd => rd.Velocity >= minVelocity);
+                throw new ArgumentException("End date must be greater than start date.");
             }
 
-            if (maxVelocity > 0)
-            {
-                query = query.Where(rd => rd.Velocity <= maxVelocity);
-            }
+            var roadDataList = await _context.RoadDatas
+                .Where(r => r.AttemptId == attemptId)
+                .Where(r => r.Velocity >= minVelocity && r.Velocity <= maxVelocity)
+                .ToListAsync();
 
-            return await query.ToListAsync();
-        }
+            // Filter based on parsed startDateTime and endDateTime
+            var filteredRoadData = roadDataList.Where(r =>
+                (!startDateTime.HasValue || r.Timestamp >= startDateTime.Value) &&
+                (!endDateTime.HasValue || r.Timestamp <= endDateTime.Value))
+                .ToList();
 
-        public async Task<RoadData?> GetByIdAsync(string id)
-        {
-            return await _context.RoadDatas.FindAsync(id);
+            return filteredRoadData;
         }
     }
 }

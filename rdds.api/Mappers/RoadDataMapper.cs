@@ -24,13 +24,21 @@ namespace rdds.api.Mappers
                     Latitude = roadDataModel.Coordinate.Latitude,
                     Longitude = roadDataModel.Coordinate.Longitude
                 },
-                Timestamp = roadDataModel.Timestamp,
+                Timestamp = roadDataModel.Timestamp.ToString(),
                 AttemptId = roadDataModel.AttemptId
             };
         }
 
         public static RoadData ToRoadDataFromCreate(this CreateRoadDataDto roadDataDto, int attemptId)
         {
+            // Convert Timestamp string to DateTime
+            DateTime timestamp;
+            // Attempt to parse the timestamp string to DateTime
+            if (!DateTime.TryParse(roadDataDto.Timestamp, out timestamp))
+            {
+                throw new ArgumentException($"Invalid timestamp format: {roadDataDto.Timestamp}");
+            }
+
             return new RoadData
             {
                 Roll = roadDataDto.Roll,
@@ -43,7 +51,7 @@ namespace rdds.api.Mappers
                     Latitude = roadDataDto.Latitude,
                     Longitude = roadDataDto.Longitude
                 },
-                Timestamp = roadDataDto.Timestamp,
+                Timestamp = timestamp,
                 AttemptId = attemptId
             };
         }

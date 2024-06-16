@@ -14,7 +14,8 @@ namespace rdds.api.Interfaces
         Task<Attempt?> CreateAsync(Attempt attemptModel);
         Task<Attempt?> UpdateAsync(int id, Attempt attemptModel);
         Task<Attempt?> FinishAsync(int id);
-        Task<Device?> DeleteAsync(int id);
+        Task<Attempt?> DeleteAsync(int id);
         Task<bool> IsExistedAsync(int id);
+        Task<bool> IsAttemptRelatedToDevice(int attemptId, string deviceMac);
     }
 }

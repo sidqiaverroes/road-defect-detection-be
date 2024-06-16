@@ -55,12 +55,14 @@ namespace rdds.api.Data
             builder.Entity<Device>()
             .HasMany(a => a.Attempts)
             .WithOne(rd => rd.Device)
-            .HasForeignKey(rd => rd.DeviceId);
+            .HasForeignKey(rd => rd.DeviceId)
+            .OnDelete(DeleteBehavior.Cascade);;
 
             builder.Entity<Attempt>()
             .HasMany(a => a.RoadDatas)
             .WithOne(rd => rd.Attempt)
-            .HasForeignKey(rd => rd.AttemptId);
+            .HasForeignKey(rd => rd.AttemptId)
+            .OnDelete(DeleteBehavior.Cascade);;
             
 
             // Configure many-to-many relationship between AppUser and AccessType

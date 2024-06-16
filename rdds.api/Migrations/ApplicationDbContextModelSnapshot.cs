@@ -51,13 +51,13 @@ namespace rdds.api.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "3b621712-e520-4c86-be66-fea9f05693fb",
+                            Id = "033473b3-7bde-41e9-bc79-7441ef21c550",
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         },
                         new
                         {
-                            Id = "d0c86b3f-52a5-4789-88cf-5c372eb7fdac",
+                            Id = "04e42a4c-017d-494a-ac50-a06c1b0e890a",
                             Name = "User",
                             NormalizedName = "USER"
                         });
@@ -377,8 +377,8 @@ namespace rdds.api.Migrations
                     b.Property<float>("Roll")
                         .HasColumnType("real");
 
-                    b.Property<string>("Timestamp")
-                        .HasColumnType("text");
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<float>("Velocity")
                         .HasColumnType("real");
@@ -459,7 +459,8 @@ namespace rdds.api.Migrations
                 {
                     b.HasOne("rdds.api.Models.Device", "Device")
                         .WithMany("Attempts")
-                        .HasForeignKey("DeviceId");
+                        .HasForeignKey("DeviceId")
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("rdds.api.Models.RoadCategory", "RoadCategory")
                         .WithMany("Attempts")
@@ -486,7 +487,8 @@ namespace rdds.api.Migrations
                 {
                     b.HasOne("rdds.api.Models.Attempt", "Attempt")
                         .WithMany("RoadDatas")
-                        .HasForeignKey("AttemptId");
+                        .HasForeignKey("AttemptId")
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.OwnsOne("rdds.api.Models.Coordinate", "Coordinate", b1 =>
                         {

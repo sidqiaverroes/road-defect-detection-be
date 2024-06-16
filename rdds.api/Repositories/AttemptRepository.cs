@@ -31,9 +31,19 @@ namespace rdds.api.Repositories
             return attemptModel;
         }
 
-        public Task<Device?> DeleteAsync(int id)
+        public async Task<Attempt?> DeleteAsync(int id)
         {
-            throw new NotImplementedException();
+            var attempt = await _context.Attempts.FindAsync(id);
+
+            if (attempt == null)
+            {
+                return null; // Attempt not found
+            }
+
+            _context.Attempts.Remove(attempt);
+            await _context.SaveChangesAsync();
+
+            return attempt;
         }
 
         public async Task<Attempt?> FinishAsync(int id)
@@ -87,6 +97,15 @@ namespace rdds.api.Repositories
             await _context.SaveChangesAsync();
 
             return existingAttempt;
+        }
+
+        public async Task<bool> IsAttemptRelatedToDevice(int attemptId, string deviceMac)
+        {
+            // Check if there exists an attempt with the given attemptId related to the device with the specified deviceMac
+            var isRelated = await _context.Attempts
+                .AnyAsync(a => a.Id == attemptId && a.Device.MacAddress == deviceMac);
+
+            return isRelated;
         }
     }
 }

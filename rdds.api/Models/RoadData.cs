@@ -14,14 +14,8 @@ namespace rdds.api.Models
         public float Euclidean { get; set; }
         public float Velocity { get; set; }
         public Coordinate Coordinate { get; set; } = new Coordinate();
-        public string? Timestamp { get; set; }
+        public DateTime Timestamp { get; set; }
         public int? AttemptId {get; set;}
         public Attempt? Attempt { get; set; }
-    }
-
-    public class Coordinate
-    {
-        public float Latitude { get; set; }
-        public float Longitude { get; set; }
     }
 }

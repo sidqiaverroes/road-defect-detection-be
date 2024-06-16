@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -9,7 +10,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace rdds.api.Migrations
 {
     /// <inheritdoc />
-    public partial class NewModel : Migration
+    public partial class @new : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -21,7 +22,7 @@ namespace rdds.api.Migrations
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Name = table.Column<string>(type: "text", nullable: false),
-                    Accesses = table.Column<string[]>(type: "text[]", nullable: true)
+                    Accesses = table.Column<List<string>>(type: "text[]", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -40,6 +41,20 @@ namespace rdds.api.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_AspNetRoles", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "RoadCategories",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    TotalLength = table.Column<float>(type: "real", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_RoadCategories", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -213,7 +228,8 @@ namespace rdds.api.Migrations
                     LastModified = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     IsFinished = table.Column<bool>(type: "boolean", nullable: false),
                     FinishedOn = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
-                    DeviceId = table.Column<string>(type: "text", nullable: true)
+                    DeviceId = table.Column<string>(type: "text", nullable: true),
+                    RoadCategoryId = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -222,7 +238,14 @@ namespace rdds.api.Migrations
                         name: "FK_Attempts_Devices_DeviceId",
                         column: x => x.DeviceId,
                         principalTable: "Devices",
-                        principalColumn: "MacAddress");
+                        principalColumn: "MacAddress",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Attempts_RoadCategories_RoadCategoryId",
+                        column: x => x.RoadCategoryId,
+                        principalTable: "RoadCategories",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
                 });
 
             migrationBuilder.CreateTable(
@@ -237,7 +260,7 @@ namespace rdds.api.Migrations
                     Velocity = table.Column<float>(type: "real", nullable: false),
                     Coordinate_Latitude = table.Column<float>(type: "real", nullable: false),
                     Coordinate_Longitude = table.Column<float>(type: "real", nullable: false),
-                    Timestamp = table.Column<string>(type: "text", nullable: true),
+                    Timestamp = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     AttemptId = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
@@ -247,7 +270,8 @@ namespace rdds.api.Migrations
                         name: "FK_RoadDatas_Attempts_AttemptId",
                         column: x => x.AttemptId,
                         principalTable: "Attempts",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.InsertData(
@@ -255,8 +279,8 @@ namespace rdds.api.Migrations
                 columns: new[] { "Id", "Accesses", "Name" },
                 values: new object[,]
                 {
-                    { 1, new[] { "read", "write", "update", "delete" }, "Admin" },
-                    { 2, new[] { "read" }, "User" }
+                    { 1, new List<string> { "read", "write", "update", "delete" }, "Admin" },
+                    { 2, new List<string> { "read" }, "User" }
                 });
 
             migrationBuilder.InsertData(
@@ -264,8 +288,8 @@ namespace rdds.api.Migrations
                 columns: new[] { "Id", "ConcurrencyStamp", "Name", "NormalizedName" },
                 values: new object[,]
                 {
-                    { "5db060cd-6514-4449-8797-b580e626891e", null, "User", "USER" },
-                    { "cccc8768-5cbe-4f39-9f8d-0dd52fdd6f8a", null, "Admin", "ADMIN" }
+                    { "033473b3-7bde-41e9-bc79-7441ef21c550", null, "Admin", "ADMIN" },
+                    { "04e42a4c-017d-494a-ac50-a06c1b0e890a", null, "User", "USER" }
                 });
 
             migrationBuilder.CreateIndex(
@@ -316,6 +340,11 @@ namespace rdds.api.Migrations
                 column: "DeviceId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Attempts_RoadCategoryId",
+                table: "Attempts",
+                column: "RoadCategoryId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Devices_AppUserId",
                 table: "Devices",
                 column: "AppUserId");
@@ -355,6 +384,9 @@ namespace rdds.api.Migrations
 
             migrationBuilder.DropTable(
                 name: "Devices");
+
+            migrationBuilder.DropTable(
+                name: "RoadCategories");
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");
