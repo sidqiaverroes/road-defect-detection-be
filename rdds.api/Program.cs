@@ -113,7 +113,7 @@ builder.Services.AddSingleton(sp =>
     };
     return new HiveMQClient(options);
 });
-builder.Services.AddScoped<MqttService>();
+builder.Services.AddSingleton<MqttService>();
 builder.Services.AddHostedService<MqttService>();
 
 var app = builder.Build();

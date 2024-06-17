@@ -1,25 +1,26 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net.WebSockets;
-using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using rdds.api.Services.MQTT;
 
 namespace rdds.api.Controllers
 {
+    [ApiExplorerSettings(IgnoreApi = true)]
+    [Route("{deviceId}/{attemptId}")]
     public class WebSocketController : ControllerBase
     {
         private readonly MqttService _mqttService;
+        private readonly ILogger<WebSocketController> _logger;
 
-        public WebSocketController(MqttService mqttService)
+        public WebSocketController(MqttService mqttService, ILogger<WebSocketController> logger)
         {
             _mqttService = mqttService;
+            _logger = logger;
         }
-        
-        [ApiExplorerSettings(IgnoreApi = true)]
-        [Route("/{deviceId}/{attemptId}")]
+
+        [HttpGet]
         public async Task Get([FromRoute] string deviceId, [FromRoute] string attemptId)
         {
             if (HttpContext.WebSockets.IsWebSocketRequest)
@@ -32,7 +33,5 @@ namespace rdds.api.Controllers
                 HttpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
             }
         }
-
-        
     }
 }

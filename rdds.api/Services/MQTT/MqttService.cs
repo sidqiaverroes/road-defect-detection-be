@@ -140,31 +140,8 @@ namespace rdds.api.Services.MQTT
         {
             var topic = $"{deviceId}/{attemptId}";
             RegisterWebSocketForTopic(webSocket, topic);
-            
-            var buffer = new byte[1024 * 4];
-            var pingInterval = TimeSpan.FromMinutes(1); // Ping interval
 
-            using var pingCancellationTokenSource = new CancellationTokenSource();
-            var pingTask = Task.Run(async () =>
-            {
-                try
-                {
-                    while (webSocket.State == WebSocketState.Open)
-                    {
-                        var pingMessage = Encoding.UTF8.GetBytes("{\"type\":\"ping\"}");
-                        await webSocket.SendAsync(new ArraySegment<byte>(pingMessage),
-                                                    WebSocketMessageType.Text,
-                                                    true,
-                                                    CancellationToken.None);
-                        _logger.LogInformation("Sent ping to WebSocket client");
-                        await Task.Delay(pingInterval, pingCancellationTokenSource.Token);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError($"Error sending ping: {ex.Message}");
-                }
-            });
+            var buffer = new byte[1024 * 4];
 
             try
             {
@@ -177,19 +154,21 @@ namespace rdds.api.Services.MQTT
                         await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None);
                         UnregisterWebSocket(webSocket);
                         _logger.LogInformation("WebSocket connection closed");
+                        break;
                     }
                     else if (result.MessageType == WebSocketMessageType.Text)
                     {
                         var message = Encoding.UTF8.GetString(buffer, 0, result.Count);
                         _logger.LogInformation($"Received message from WebSocket client: {message}");
-
-                        // Handle incoming message (e.g., pong)
-                        if (message == "{\"type\":\"pong\"}")
-                        {
-                            _logger.LogInformation("Received pong from client");
-                        }
                     }
+
+                    // Clear the buffer for next read
+                    Array.Clear(buffer, 0, buffer.Length);
                 }
+            }
+            catch (WebSocketException wex) when (wex.WebSocketErrorCode == WebSocketError.ConnectionClosedPrematurely)
+            {
+                _logger.LogError($"WebSocket closed prematurely: {wex.Message}");
             }
             catch (Exception ex)
             {
@@ -197,14 +176,10 @@ namespace rdds.api.Services.MQTT
             }
             finally
             {
-                pingCancellationTokenSource.Cancel(); // Stop the ping task
-                await pingTask; // Wait for the ping task to complete
                 UnregisterWebSocket(webSocket);
                 _logger.LogInformation($"Client disconnected. Total connected clients: {GetTotalWebSocketCount()}");
             }
         }
-
-
 
         public int GetTotalWebSocketCount()
         {
