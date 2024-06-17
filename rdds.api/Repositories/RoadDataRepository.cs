@@ -44,6 +44,23 @@ namespace rdds.api.Repositories
             }
         }
 
+        public async Task<bool> DeleteAllAsync()
+        {
+            try
+            {
+                var roadDataEntities = await _context.RoadDatas.ToListAsync();
+                _context.RoadDatas.RemoveRange(roadDataEntities);
+                await _context.SaveChangesAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                // Log the exception
+                Console.WriteLine($"Error deleting all RoadData: {ex.Message}");
+                return false;
+            }
+        }
+
         public async Task<List<RoadData>> GetAllByFilterAsync(string deviceMac, int attemptId, string startDate = "", string endDate = "", float minVelocity = 0, float maxVelocity = 0)
         {
             // Parse startDate and endDate strings to DateTime objects

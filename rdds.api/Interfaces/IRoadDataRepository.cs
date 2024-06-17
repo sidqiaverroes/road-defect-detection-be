@@ -11,5 +11,6 @@ namespace rdds.api.Interfaces
     {
         Task<List<RoadData>> GetAllByFilterAsync(string deviceMac, int attemptId, string startDate, string endDate, float minVelocity, float maxVelocity);
         Task<bool> CreateAsync(IEnumerable<CreateRoadDataDto> roadDataModels, int attemptId);
+        Task<bool> DeleteAllAsync();
     }
 }

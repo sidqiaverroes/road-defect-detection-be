@@ -89,5 +89,26 @@ namespace rdds.api.Controllers
                 return BadRequest(ex.Message);
             }
         }
+
+        [HttpDelete]
+        public async Task<IActionResult> DeleteAllRoadData()
+        {
+            try
+            {
+                var success = await _roadDataRepo.DeleteAllAsync();
+                if (success)
+                {
+                    return NoContent(); // 204 No Content
+                }
+                else
+                {
+                    return StatusCode(500); // Server error
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
     }
 }
