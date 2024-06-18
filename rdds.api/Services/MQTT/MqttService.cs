@@ -91,23 +91,20 @@ namespace rdds.api.Services.MQTT
                     
                     //Payload preps
                     var roadDataList = new List<CalculateRoadDataDto>();
-                    var payloadList = new List<SensorData>();
+                    var sensorDataList = new List<SensorData>();
                     foreach (var payload in payloads)
                     {
-                        var sensorDataList = JsonSerializer.Deserialize<List<SensorData>>(payload);
+                        var _sensorDataList = JsonSerializer.Deserialize<List<SensorData>>(payload);
 
-                        if (sensorDataList == null || sensorDataList.Count == 0)
+                        if (_sensorDataList == null || _sensorDataList.Count == 0)
                         {
                             throw new Exception("Failed to deserialize json");
                         }
 
-                        //Save Road Data
-                        //await _roadDataRepo.CreateFromMqttAsync(sensorDataList, attemptId);
-
                         // Map SensorData to CalculateRoadDataDto
-                        foreach (var sensorData in sensorDataList)
+                        foreach (var sensorData in _sensorDataList)
                         {
-                            payloadList.Add(sensorData);
+                            sensorDataList.Add(sensorData);
 
                             var roadData = new CalculateRoadDataDto
                             {
@@ -126,20 +123,14 @@ namespace rdds.api.Services.MQTT
                     InternationalRoughnessIndex IRIData = CalculateIRI(roadDataList, samplingFrequency);
 
                     // Save road data
-                    // foreach (var calculatedData in calculatedDataList)
-                    // {
-                    //     await _roadDataRepo.CreateFromMqttAsync(calculatedData);
-                    // }
+                    await _roadDataRepo.CreateFromMqttAsync(sensorDataList, attemptId);
 
-                    // // Save calculated data
-                    // foreach (var calculatedData in calculatedDataList)
-                    // {
-                    //     await _calculatedDataRepo.SaveAsync(calculatedData);
-                    // }
+                    // Save calculated data
+                    await _calculatedDataRepo.CreateFromMqttAsync(sensorDataList, IRIData, attemptId);
 
                     //Generate json websocket payload
-                    var wsPayloads = new List<WebsocketPayload>();
-                    foreach(var p in payloadList)
+                    var payloadList = new List<WebsocketPayload>();
+                    foreach(var p in sensorDataList)
                     {
                         var wsp = new WebsocketPayload
                         {
@@ -156,14 +147,14 @@ namespace rdds.api.Services.MQTT
                             AttemptId = attemptId.ToString()
                         };
 
-                        wsPayloads.Add(wsp);
+                        payloadList.Add(wsp);
                     }
 
-                    var websocketPayloads = JsonSerializer.Serialize(wsPayloads);
+                    var websocketPayload = JsonSerializer.Serialize(payloadList);
                     
 
                     //Send to Websocket
-                    await SendToWebSocketTopicAsync(deviceId, attemptId.ToString(), websocketPayloads);
+                    await SendToWebSocketTopicAsync(deviceId, attemptId.ToString(), websocketPayload);
                     
                 }
             }

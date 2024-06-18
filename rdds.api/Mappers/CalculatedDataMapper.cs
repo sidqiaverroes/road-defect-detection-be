@@ -49,15 +49,20 @@ namespace rdds.api.Mappers
             {
                 IRI = new InternationalRoughnessIndex
                 {
-                    Roll = calculatedDataDto.IRIRoll,
-                    Pitch = calculatedDataDto.IRIPitch,
-                    Euclidean = calculatedDataDto.IRIEuclidean
+                    Roll = calculatedDataDto.IRI.Roll,
+                    Pitch = calculatedDataDto.IRI.Pitch,
+                    Euclidean = calculatedDataDto.IRI.Euclidean,
+                    Average = calculatedDataDto.IRI.Average,
+                    RollProfile = calculatedDataDto.IRI.RollProfile,
+                    PitchProfile = calculatedDataDto.IRI.PitchProfile,
+                    EuclideanProfile = calculatedDataDto.IRI.EuclideanProfile,
+                    AverageProfile = calculatedDataDto.IRI.AverageProfile,
                 },
                 Velocity = calculatedDataDto.Velocity,
                 Coordinate = new Coordinate
                 {
-                    Latitude = calculatedDataDto.Latitude,
-                    Longitude = calculatedDataDto.Longitude
+                    Latitude = calculatedDataDto.Coordinate.Latitude,
+                    Longitude = calculatedDataDto.Coordinate.Longitude
                 },
                 Timestamp = timestamp,
                 AttemptId = attemptId

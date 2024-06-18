@@ -62,41 +62,58 @@ namespace rdds.api.Repositories
             }
         }
 
-        public async Task<List<RoadData>> GetAllByFilterAsync(string deviceMac, int attemptId, string startDate = "", string endDate = "", float minVelocity = 0, float maxVelocity = 0)
+        public async Task<List<RoadData>> GetAllByFilterAsync(int? attemptId, string startDate = "", string endDate = "", float minVelocity = 0, float maxVelocity = 0)
         {
-            // Parse startDate and endDate strings to DateTime objects
             DateTime? startDateTime = null;
             DateTime? endDateTime = null;
 
-            if (!string.IsNullOrEmpty(startDate) && DateTime.TryParseExact(startDate, "yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedStartDate))
+            if (!string.IsNullOrEmpty(startDate) && DateTime.TryParse(startDate, CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedStartDate))
             {
-                startDateTime = parsedStartDate;
+                startDateTime = parsedStartDate.Date; // Extracts the date part without time
             }
 
-            if (!string.IsNullOrEmpty(endDate) && DateTime.TryParseExact(endDate, "yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedEndDate))
+            if (!string.IsNullOrEmpty(endDate) && DateTime.TryParse(endDate, CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedEndDate))
             {
-                endDateTime = parsedEndDate;
+                endDateTime = parsedEndDate.Date; // Extracts the date part without time
             }
 
-            // Validate end date is greater than start date
-            if (startDateTime.HasValue && endDateTime.HasValue && endDateTime <= startDateTime)
+            if (startDateTime.HasValue && endDateTime.HasValue && endDateTime < startDateTime)
             {
                 throw new ArgumentException("End date must be greater than start date.");
             }
 
-            var roadDataList = await _context.RoadDatas
-                .Where(r => r.AttemptId == attemptId)
-                .Where(r => r.Velocity >= minVelocity && r.Velocity <= maxVelocity)
-                .ToListAsync();
+            var query = _context.RoadDatas.AsQueryable();
 
-            // Filter based on parsed startDateTime and endDateTime
-            var filteredRoadData = roadDataList.Where(r =>
-                (!startDateTime.HasValue || r.Timestamp >= startDateTime.Value) &&
-                (!endDateTime.HasValue || r.Timestamp <= endDateTime.Value))
-                .ToList();
+            if (attemptId.HasValue)
+            {
+                query = query.Where(rd => rd.AttemptId == attemptId.Value);
+            }
 
-            return filteredRoadData;
+            if (minVelocity > 0)
+            {
+                query = query.Where(rd => rd.Velocity >= minVelocity);
+            }
+
+            if (maxVelocity > 0)
+            {
+                query = query.Where(rd => rd.Velocity <= maxVelocity);
+            }
+
+            if (startDateTime.HasValue)
+            {
+                query = query.Where(rd => rd.Timestamp.Date >= startDateTime.Value);
+            }
+
+            if (endDateTime.HasValue)
+            {
+                query = query.Where(rd => rd.Timestamp.Date <= endDateTime.Value);
+            }
+
+            var roadDataList = await query.ToListAsync();
+
+            return roadDataList;
         }
+
 
         public async Task CreateFromMqttAsync(List<SensorData> sensorDataList, int attemptId)
         {

@@ -36,9 +36,42 @@ namespace rdds.api.Repositories
             }
         }
 
-        public Task CreateFromMqttAsync(string payload, int attemptId)
+        public async Task CreateFromMqttAsync(List<SensorData> sensorDataList, InternationalRoughnessIndex IRI, int attemptId)
         {
-            throw new NotImplementedException();
+            try
+            {
+                var calculatedDataList = new List<CreateCalculatedDataDto>();
+
+                foreach (var sensorData in sensorDataList)
+                {
+                    // Map SensorData to RoadData
+                    var calcualtedData = new CreateCalculatedDataDto
+                    {
+                        IRI = IRI,
+                        Velocity = sensorData.velocity,
+                        Coordinate = new Coordinate
+                        {
+                            Latitude = sensorData.latitude,
+                            Longitude = sensorData.longitude,
+                        },
+                        Timestamp = sensorData.timestamp,
+                        AttemptId = attemptId
+                    };
+
+                    calculatedDataList.Add(calcualtedData);
+                }
+
+                // Convert CreateRoadDataDto to RoadData entities
+                var calculatedDataModels = calculatedDataList.Select(dto => dto.ToCalculatedDataFromCreate(attemptId)).ToList();
+
+                // Add range of roadDataModels to context and save changes
+                await _context.CalculatedDatas.AddRangeAsync(calculatedDataModels);
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
 
         public async Task<bool> DeleteAllAsync()
@@ -57,37 +90,53 @@ namespace rdds.api.Repositories
             }
         }
 
-        public async Task<List<CalculatedData>> GetAllByFilterAsync(string deviceMac, int attemptId, string startDate, string endDate, float minVelocity, float maxVelocity)
+        public async Task<List<CalculatedData>> GetAllByFilterAsync(int? attemptId, string startDate, string endDate, float minVelocity, float maxVelocity)
         {
             DateTime? startDateTime = null;
             DateTime? endDateTime = null;
 
-            if (!string.IsNullOrEmpty(startDate) && DateTime.TryParseExact(startDate, "yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedStartDate))
+            if (!string.IsNullOrEmpty(startDate) && DateTime.TryParse(startDate, CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedStartDate))
             {
-                startDateTime = parsedStartDate;
+                startDateTime = parsedStartDate.Date; // Extracts the date part without time
             }
 
-            if (!string.IsNullOrEmpty(endDate) && DateTime.TryParseExact(endDate, "yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedEndDate))
+            if (!string.IsNullOrEmpty(endDate) && DateTime.TryParse(endDate, CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedEndDate))
             {
-                endDateTime = parsedEndDate;
+                endDateTime = parsedEndDate.Date; // Extracts the date part without time
             }
 
-            if (startDateTime.HasValue && endDateTime.HasValue && endDateTime <= startDateTime)
+            if (startDateTime.HasValue && endDateTime.HasValue && endDateTime < startDateTime)
             {
                 throw new ArgumentException("End date must be greater than start date.");
             }
 
-            var calculatedDataList = await _context.CalculatedDatas
-                .Where(cd => cd.AttemptId == attemptId)
-                .Where(cd => cd.Velocity >= minVelocity && cd.Velocity <= maxVelocity)
-                .ToListAsync();
+            var query = _context.CalculatedDatas.AsQueryable();
 
-            var filteredCalculatedData = calculatedDataList.Where(cd =>
-                (!startDateTime.HasValue || cd.Timestamp >= startDateTime.Value) &&
-                (!endDateTime.HasValue || cd.Timestamp <= endDateTime.Value))
-                .ToList();
+            query = query.Where(cd => cd.AttemptId == attemptId);
 
-            return filteredCalculatedData;
+            if (minVelocity > 0)
+            {
+                query = query.Where(cd => cd.Velocity >= minVelocity);
+            }
+
+            if (maxVelocity > 0)
+            {
+                query = query.Where(cd => cd.Velocity <= maxVelocity);
+            }
+
+            if (startDateTime.HasValue)
+            {
+                query = query.Where(cd => cd.Timestamp.Date >= startDateTime.Value);
+            }
+
+            if (endDateTime.HasValue)
+            {
+                query = query.Where(cd => cd.Timestamp.Date <= endDateTime.Value);
+            }
+
+            var calculatedDataList = await query.ToListAsync();
+
+            return calculatedDataList;
         }
     }
 }

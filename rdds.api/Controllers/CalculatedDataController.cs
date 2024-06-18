@@ -24,8 +24,8 @@ namespace rdds.api.Controllers
             _attemptRepo = attemptRepo;
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetAllByFilter([FromRoute] string deviceMac, [FromRoute] int attemptId, string startDate = "", string endDate = "", float minVelocity = 0, float maxVelocity = 0)
+        [HttpGet("{deviceMac}")]
+        public async Task<IActionResult> GetAllByFilter([FromRoute] string deviceMac, [FromQuery] int? attemptId = null, [FromQuery] string startDate = "", [FromQuery] string endDate = "", [FromQuery] float minVelocity = 0, [FromQuery] float maxVelocity = 0)
         {
             // Check if the device exists
             var device = await _deviceRepo.GetByMacAddressAsync(deviceMac);
@@ -34,25 +34,42 @@ namespace rdds.api.Controllers
                 return BadRequest($"Device with MAC address '{deviceMac}' not found.");
             }
 
-            // Check if the attempt exists
-            var attemptExists = await _attemptRepo.IsExistedAsync(attemptId);
-            if (!attemptExists)
+            List<CalculatedDataDto> calculatedDataDtoList = new List<CalculatedDataDto>();
+
+            if (attemptId.HasValue)
             {
-                return BadRequest($"Attempt with ID '{attemptId}' not found.");
+                // Check if the attempt exists
+                var attemptExists = await _attemptRepo.IsExistedAsync(attemptId.Value);
+                if (!attemptExists)
+                {
+                    return BadRequest($"Attempt with ID '{attemptId}' not found.");
+                }
+
+                // Check if the attempt is related to the device
+                var isAttemptRelated = await _attemptRepo.IsAttemptRelatedToDevice(attemptId.Value, deviceMac);
+                if (!isAttemptRelated)
+                {
+                    return BadRequest($"Attempt with ID '{attemptId}' is not related to device with MAC address '{deviceMac}'.");
+                }
+
+                // Fetch road data for the specific attempt and filters
+                var roadDataModels = await _calculatedDataRepository.GetAllByFilterAsync(attemptId.Value, startDate, endDate, minVelocity, maxVelocity);
+                calculatedDataDtoList = roadDataModels.Select(rd => rd.ToCalculatedDataDto()).ToList();
+            }
+            else
+            {
+                foreach(var attempt in device.Attempts)
+                {
+                    // Fetch road data without filtering by attempt, but for the device
+                    var roadDataModels = await _calculatedDataRepository.GetAllByFilterAsync(attempt.Id, startDate, endDate, minVelocity, maxVelocity);
+                    calculatedDataDtoList.AddRange(roadDataModels.Select(rd => rd.ToCalculatedDataDto()));
+                }
             }
 
-            // Check if the attempt is related to the device
-            var isAttemptRelated = await _attemptRepo.IsAttemptRelatedToDevice(attemptId, deviceMac);
-            if (!isAttemptRelated)
-            {
-                return BadRequest($"Attempt with ID '{attemptId}' is not related to device with MAC address '{deviceMac}'.");
-            }
-
-            var calculatedData = await _calculatedDataRepository.GetAllByFilterAsync(deviceMac, attemptId, startDate, endDate, minVelocity, maxVelocity);
-            var calculatedDataDtos = calculatedData.Select(cd => cd.ToCalculatedDataDto());
-            return Ok(calculatedDataDtos);
+            return Ok(calculatedDataDtoList);
         }
 
+        [ApiExplorerSettings(IgnoreApi = true)]
         [HttpPost]
         public async Task<ActionResult> Create([FromBody] IEnumerable<CreateCalculatedDataDto> createCalculatedDataDtos, int attemptId)
         {
@@ -86,6 +103,7 @@ namespace rdds.api.Controllers
             return Ok();
         }
 
+        [ApiExplorerSettings(IgnoreApi = true)]
         [HttpDelete]
         public async Task<ActionResult> DeleteAll()
         {
