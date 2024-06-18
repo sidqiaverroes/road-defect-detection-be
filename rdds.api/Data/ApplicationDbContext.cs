@@ -19,6 +19,7 @@ namespace rdds.api.Data
         public DbSet<Device> Devices {get; set;}
         public DbSet<Attempt> Attempts {get; set;}
         public DbSet<RoadData> RoadDatas { get; set; }
+        public DbSet<CalculatedData> CalculatedDatas { get; set; }
         public DbSet<AccessType> AccessTypes { get; set; }
         public DbSet<RoadCategory> RoadCategories { get; set; }
 
@@ -50,7 +51,39 @@ namespace rdds.api.Data
             builder.Entity<AccessType>().HasData(accessTypes);
 
             builder.Entity<RoadData>()
-            .OwnsOne(rd => rd.Coordinate);
+            .OwnsOne(rd => rd.Coordinate, coord =>
+            {
+                coord.Property(c => c.Latitude).HasColumnName("Latitude");
+                coord.Property(c => c.Longitude).HasColumnName("Longitude");
+            });
+
+            builder.Entity<CalculatedData>()
+            .OwnsOne(cd => cd.Coordinate, coord =>
+            {
+                coord.Property(c => c.Latitude).HasColumnName("Latitude");
+                coord.Property(c => c.Longitude).HasColumnName("Longitude");
+            });
+
+            builder.Entity<CalculatedData>()
+            .OwnsOne(cd => cd.PSD, psd =>
+            {
+                psd.Property(p => p.Roll).HasColumnName("PSD_Roll");
+                psd.Property(p => p.Pitch).HasColumnName("PSD_Pitch");
+                psd.Property(p => p.Euclidean).HasColumnName("PSD_Euclidean");
+            });
+
+            builder.Entity<CalculatedData>()
+            .OwnsOne(cd => cd.IRI, iri =>
+            {
+                iri.Property(i => i.Roll).HasColumnName("IRI_Roll");
+                iri.Property(i => i.Pitch).HasColumnName("IRI_Pitch");
+                iri.Property(i => i.Euclidean).HasColumnName("IRI_Euclidean");
+            });
+
+            builder.Entity<CalculatedData>()
+            .HasOne(cd => cd.Attempt)
+            .WithMany(a => a.CalculatedData)
+            .HasForeignKey(cd => cd.AttemptId);
 
             builder.Entity<Device>()
             .HasMany(a => a.Attempts)
@@ -64,7 +97,6 @@ namespace rdds.api.Data
             .HasForeignKey(rd => rd.AttemptId)
             .OnDelete(DeleteBehavior.Cascade);;
             
-
             // Configure many-to-many relationship between AppUser and AccessType
             builder.Entity<AppUser>()
             .HasOne(u => u.AccessType)

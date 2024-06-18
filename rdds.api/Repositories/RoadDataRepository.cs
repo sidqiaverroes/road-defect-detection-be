@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using rdds.api.Data;
@@ -95,6 +96,51 @@ namespace rdds.api.Repositories
                 .ToList();
 
             return filteredRoadData;
+        }
+
+        public async Task CreateFromMqttAsync(string payload, int attemptId)
+        {
+            try
+            {
+                // Deserialize JSON payload into a list of SensorData
+                var sensorDataList = JsonSerializer.Deserialize<List<SensorData>>(payload);
+
+                if (sensorDataList == null || sensorDataList.Count == 0)
+                {
+                    throw new Exception("Failed to deserialize json");
+                }
+
+                var roadDataList = new List<CreateRoadDataDto>();
+
+                foreach (var sensorData in sensorDataList)
+                {
+
+                    // Map SensorData to RoadData
+                    var roadData = new CreateRoadDataDto
+                    {
+                        Roll = (float)sensorData.roll,
+                        Pitch = (float)sensorData.pitch,
+                        Euclidean = (float)sensorData.euclidean,
+                        Velocity = (float)sensorData.velocity,
+                        Timestamp = sensorData.timestamp,
+                        Latitude = sensorData.latitude,
+                        Longitude = sensorData.longitude
+                    };
+
+                    roadDataList.Add(roadData);
+                }
+
+                // Convert CreateRoadDataDto to RoadData entities
+                var roadDataModels = roadDataList.Select(dto => dto.ToRoadDataFromCreate(attemptId)).ToList();
+
+                // Add range of roadDataModels to context and save changes
+                await _context.RoadDatas.AddRangeAsync(roadDataModels);
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
     }
 }

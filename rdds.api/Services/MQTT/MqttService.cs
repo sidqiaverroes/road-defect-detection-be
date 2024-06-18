@@ -42,40 +42,11 @@ namespace rdds.api.Services.MQTT
 
                     try
                     {
-                        // Deserialize JSON payload into a list of SensorData
-                        var sensorDataList = JsonSerializer.Deserialize<List<SensorData>>(payload);
-
-                        if (sensorDataList == null || sensorDataList.Count == 0)
-                        {
-                            _logger.LogError($"Failed to deserialize payload or payload is empty: {payload}");
-                            return;
-                        }
-
-                        var roadDataList = new List<CreateRoadDataDto>();
-
-                        foreach (var sensorData in sensorDataList)
-                        {
-
-                            // Map SensorData to RoadData
-                            var roadData = new CreateRoadDataDto
-                            {
-                                Roll = (float)sensorData.roll,
-                                Pitch = (float)sensorData.pitch,
-                                Euclidean = (float)sensorData.euclidean,
-                                Velocity = (float)sensorData.velocity,
-                                Timestamp = sensorData.timestamp,
-                                Latitude = sensorData.latitude,
-                                Longitude = sensorData.longitude
-                            };
-
-                            roadDataList.Add(roadData);
-                        }
-
                         // Save RoadData to database using CreateAsync method
                         using (var scope = _scopeFactory.CreateScope())
                         {
                             var roadDataRepository = scope.ServiceProvider.GetRequiredService<IRoadDataRepository>();
-                            await roadDataRepository.CreateAsync(roadDataList, int.Parse(attemptId));
+                            await roadDataRepository.CreateFromMqttAsync(payload, int.Parse(attemptId));
                         }
                     }
                     catch (Exception ex)

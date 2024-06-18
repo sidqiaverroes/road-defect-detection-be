@@ -20,5 +20,6 @@ namespace rdds.api.Models
         public RoadCategory RoadCategory { get; set; }
 
         public List<RoadData> RoadDatas { get; set; } = new List<RoadData>();
+        public List<CalculatedData> CalculatedData { get; set; } = new List<CalculatedData>();
     }
 }

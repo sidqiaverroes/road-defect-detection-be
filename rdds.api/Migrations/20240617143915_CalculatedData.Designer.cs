@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using rdds.api.Data;
@@ -12,9 +13,11 @@ using rdds.api.Data;
 namespace rdds.api.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240617143915_CalculatedData")]
+    partial class CalculatedData
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -51,13 +54,13 @@ namespace rdds.api.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "3b2ed34b-322c-43e1-bb5a-7e994f489561",
+                            Id = "ebabbafd-7356-4d7f-b248-339139cbadf7",
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         },
                         new
                         {
-                            Id = "f08f5e74-3527-4b2c-b013-a1415b2d26c9",
+                            Id = "1fc7142a-a59e-4527-bb6d-7160da3f33a6",
                             Name = "User",
                             NormalizedName = "USER"
                         });
@@ -535,8 +538,9 @@ namespace rdds.api.Migrations
                                 .HasColumnName("IRI_Pitch");
 
                             b1.Property<float>("Roll")
+                                .ValueGeneratedOnUpdateSometimes()
                                 .HasColumnType("real")
-                                .HasColumnName("IRI_Roll");
+                                .HasColumnName("Roll");
 
                             b1.HasKey("CalculatedDataId");
 
@@ -560,8 +564,9 @@ namespace rdds.api.Migrations
                                 .HasColumnName("PSD_Pitch");
 
                             b1.Property<float>("Roll")
+                                .ValueGeneratedOnUpdateSometimes()
                                 .HasColumnType("real")
-                                .HasColumnName("PSD_Roll");
+                                .HasColumnName("Roll");
 
                             b1.HasKey("CalculatedDataId");
 

@@ -15,6 +15,6 @@ namespace rdds.api.Dtos.RoadData
         public float Velocity { get; set; }
         public float Latitude { get; set; }
         public float Longitude { get; set; }
-        public string? Timestamp { get; set;}
+        public string Timestamp { get; set;}
     }
 }

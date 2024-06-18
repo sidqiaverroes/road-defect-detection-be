@@ -27,7 +27,7 @@ namespace rdds.api.Controllers
         }
 
         [HttpGet("{deviceMac}/{attemptId}")]
-        public async Task<IActionResult> GetAllByFilter([FromRoute] string deviceMac, [FromRoute] int attemptId, [FromQuery] string startDate, [FromQuery] string endDate, [FromQuery] float minVelocity, [FromQuery] float maxVelocity)
+        public async Task<IActionResult> GetAllByFilter([FromRoute] string deviceMac, [FromRoute] int attemptId, [FromQuery] string startDate="", [FromQuery] string endDate="", [FromQuery] float minVelocity=0, [FromQuery] float maxVelocity=0)
         {
             // Check if the device exists
             var device = await _deviceRepo.GetByMacAddressAsync(deviceMac);
