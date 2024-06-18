@@ -17,7 +17,6 @@ namespace rdds.api.Mappers
                 Id = roadDataModel.Id,
                 Roll = roadDataModel.Roll,
                 Pitch = roadDataModel.Pitch,
-                Yaw = roadDataModel.Yaw,
                 Euclidean = roadDataModel.Euclidean,
                 Velocity = roadDataModel.Velocity,
                 Coordinate = new Coordinate
@@ -45,7 +44,6 @@ namespace rdds.api.Mappers
             {
                 Roll = roadDataDto.Roll,
                 Pitch = roadDataDto.Pitch,
-                Yaw = roadDataDto.Yaw,
                 Euclidean = roadDataDto.Euclidean,
                 Velocity = roadDataDto.Velocity,
                 Coordinate = new Coordinate

@@ -4,12 +4,13 @@ using System.Numerics;
 using MathNet.Numerics;
 using MathNet.Numerics.IntegralTransforms;
 using Microsoft.AspNetCore.Mvc;
+using rdds.api.Interfaces;
 
 namespace rdds.api.Services.Calculation
 {
     public class CalculationService
     {
-        private const int Nperseg = 1024; // Number of points per segment
+        private const int Nperseg = 64; // Number of points per segment
 
         public (double[] frequencies, double[] psd) CalculatePSD(double[] data, int fs)
         {

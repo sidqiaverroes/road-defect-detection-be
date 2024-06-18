@@ -11,6 +11,7 @@ using rdds.api.Interfaces;
 using rdds.api.Models;
 using rdds.api.Repositories;
 using rdds.api.Services;
+using rdds.api.Services.Calculation;
 using rdds.api.Services.MQTT;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -103,6 +104,7 @@ builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IAccessTypeRepository, AccessTypeRepository>();
 builder.Services.AddScoped<IRoadCategoryRepository, RoadCategoryRepository>();
 builder.Services.AddScoped<ICalculatedDataRepository, CalculatedDataRepository>();
+builder.Services.AddSingleton<CalculationService>();
 builder.Services.AddSingleton(sp =>
 {
     var options = new HiveMQClientOptions

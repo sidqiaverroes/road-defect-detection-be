@@ -25,7 +25,7 @@ namespace rdds.api.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<CalculatedDataDto>>> GetAllByFilter([FromRoute] string deviceMac, [FromRoute] int attemptId, string startDate = "", string endDate = "", float minVelocity = 0, float maxVelocity = 0)
+        public async Task<IActionResult> GetAllByFilter([FromRoute] string deviceMac, [FromRoute] int attemptId, string startDate = "", string endDate = "", float minVelocity = 0, float maxVelocity = 0)
         {
             // Check if the device exists
             var device = await _deviceRepo.GetByMacAddressAsync(deviceMac);
@@ -68,7 +68,8 @@ namespace rdds.api.Controllers
                 return BadRequest($"Attempt with ID '{attemptId}' not found.");
             }
 
-            try{
+            try
+            {
 
                 var result = await _calculatedDataRepository.CreateAsync(createCalculatedDataDtos, attemptId);
                 if (!result)

@@ -65,19 +65,16 @@ namespace rdds.api.Data
             });
 
             builder.Entity<CalculatedData>()
-            .OwnsOne(cd => cd.PSD, psd =>
-            {
-                psd.Property(p => p.Roll).HasColumnName("PSD_Roll");
-                psd.Property(p => p.Pitch).HasColumnName("PSD_Pitch");
-                psd.Property(p => p.Euclidean).HasColumnName("PSD_Euclidean");
-            });
-
-            builder.Entity<CalculatedData>()
             .OwnsOne(cd => cd.IRI, iri =>
             {
                 iri.Property(i => i.Roll).HasColumnName("IRI_Roll");
                 iri.Property(i => i.Pitch).HasColumnName("IRI_Pitch");
                 iri.Property(i => i.Euclidean).HasColumnName("IRI_Euclidean");
+                iri.Property(i => i.Average).HasColumnName("IRI_Average");
+                iri.Property(i => i.RollProfile).HasColumnName("Roll_Profile");
+                iri.Property(i => i.PitchProfile).HasColumnName("Pitch_Profile");
+                iri.Property(i => i.EuclideanProfile).HasColumnName("Euclidean_Profile");
+                iri.Property(i => i.AverageProfile).HasColumnName("Average_Profile");
             });
 
             builder.Entity<CalculatedData>()

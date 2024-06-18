@@ -9,7 +9,6 @@ namespace rdds.api.Dtos.CalculatedData
     public class CalculatedDataDto
     {
         public Guid Id { get; set; }
-        public PowerSpectralDensity PSD { get; set; }
         public InternationalRoughnessIndex IRI { get; set; }
         public float Velocity { get; set; }
         public Coordinate Coordinate { get; set; }

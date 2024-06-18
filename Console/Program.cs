@@ -2,81 +2,107 @@
 using HiveMQtt.Client.Options;
 using HiveMQtt.MQTT5.ReasonCodes;
 using HiveMQtt.MQTT5.Types;
+using System;
+using System.Collections.Generic;
 using System.Text;
 using System.Text.Json;
+using System.Threading.Tasks;
 
-
-var options = new HiveMQClientOptions
+public class Program
 {
-    Host = "localhost",
-    Port = 1883,
-    UserName = "admin",
-    Password = "hivemq",
-};
-
-var client = new HiveMQClient(options);
-
-// Message Handler
-//
-// It's important that this is setup before we connect to the broker
-// otherwise queued messages that are sent down may be lost.
-//
-client.OnMessageReceived += (sender, args) =>
-{
-    var jsonString = args.PublishMessage.PayloadAsString;
-    var jsonDocument = JsonDocument.Parse(jsonString);
-
-    // Traverse the JSON document using the JsonElement API
-    var root = jsonDocument.RootElement;
-    var message_number = root.GetProperty("MessageNumber").GetInt32();
-
-    Console.WriteLine($"Message Received; topic={args.PublishMessage.Topic}, message number={message_number}");
-};
-
-// Connect to the broker
-var connectResult = await client.ConnectAsync().ConfigureAwait(false);
-if (connectResult.ReasonCode != HiveMQtt.MQTT5.ReasonCodes.ConnAckReasonCode.Success)
-{
-    throw new Exception($"Failed to connect: {connectResult.ReasonString}");
-}
-
-// Subscribe to a topic
-var topic = "hivemqtt/sendmessageonloop";
-// var subscribeResult = await client.SubscribeAsync(topic, QualityOfService.ExactlyOnceDelivery).ConfigureAwait(false);
-// Console.WriteLine($"Subscribed to {topic}: {subscribeResult.Subscriptions[0].SubscribeReasonCode}");
-
-// Console.WriteLine("Waiting for 10 seconds to receive messages queued on the topic...");
-// await Task.Delay(10000).ConfigureAwait(false);
-
-Console.WriteLine(string.Empty);
-Console.WriteLine("Now publishing a QoS2 message every 15 seconds. Press Q to quit.");
-
-// Publish Loop - press q to exit
-var message_number = 0;
-while (true)
-{
-    message_number++;
-    var payload = JsonSerializer.Serialize(new
+    public class SensorData
     {
-        Content = "ConnectReceiveAndPublish",
-        MessageNumber = message_number,
-    });
-
-    var message = new MQTT5PublishMessage
-    {
-        Topic = topic,
-        Payload = Encoding.ASCII.GetBytes(payload),
-        QoS = QualityOfService.ExactlyOnceDelivery,
-    };
-
-    var resultPublish = await client.PublishAsync(message).ConfigureAwait(false);
-    Console.WriteLine($"Published QoS2 message {message_number} to topic {topic}: {resultPublish.QoS2ReasonCode}");
-
-    if(message_number == 5){
-        Console.WriteLine("Disconnecting gracefully...");
-        await client.DisconnectAsync().ConfigureAwait(false);
-        return;
+        public string timestamp { get; set; }
+        public double latitude { get; set; }
+        public double longitude { get; set; }
+        public double velocity { get; set; }
+        public double roll { get; set; }
+        public double pitch { get; set; }
+        public double euclidean { get; set; }
     }
 
-    await Task.Delay(15000).ConfigureAwait(false);
+    public static async Task Main()
+    {
+        var options = new HiveMQClientOptions
+        {
+            Host = "localhost",
+            Port = 1883,
+            UserName = "admin",
+            Password = "hivemq",
+        };
+
+        var client = new HiveMQClient(options);
+
+        // Message Handler
+        client.OnMessageReceived += (sender, args) =>
+        {
+            var jsonString = args.PublishMessage.PayloadAsString;
+            var jsonDocument = JsonDocument.Parse(jsonString);
+
+            Console.WriteLine($"Message Received; topic={args.PublishMessage.Topic}, payload={jsonString}");
+        };
+
+        // Connect to the broker
+        var connectResult = await client.ConnectAsync().ConfigureAwait(false);
+        if (connectResult.ReasonCode != HiveMQtt.MQTT5.ReasonCodes.ConnAckReasonCode.Success)
+        {
+            throw new Exception($"Failed to connect: {connectResult.ReasonString}");
+        }
+
+        var message_number = 0;
+        while (true)
+        {
+            message_number++;
+            // Generate sensor data array
+            var sensorDataList = new List<SensorData>();
+            var random = new Random();
+
+            for (int i = 0; i < 5; i++)
+            {
+                var timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss.ff");
+                var latitude = random.NextDouble() * 180 - 90;   // Example random latitude within [-90, 90]
+                var longitude = random.NextDouble() * 360 - 180; // Example random longitude within [-180, 180]
+                var velocity = random.NextDouble() * 100;        // Example random velocity within [0, 100]
+                var roll = random.NextDouble() * 180 - 90;       // Example random roll within [-90, 90]
+                var pitch = random.NextDouble() * 180 - 90;      // Example random pitch within [-90, 90]
+                var euclidean = random.NextDouble() * 100;       // Example random euclidean within [0, 100]
+
+                var data = new SensorData
+                {
+                    timestamp = timestamp,
+                    latitude = latitude,
+                    longitude = longitude,
+                    velocity = velocity,
+                    roll = roll,
+                    pitch = pitch,
+                    euclidean = euclidean
+                };
+
+                sensorDataList.Add(data);
+            }
+        
+            // Serialize sensor data array to JSON
+            var json = JsonSerializer.Serialize(sensorDataList);
+
+            // Publish JSON array to MQTT topic
+            var topic = "rdds/device/08:D1:F9:E1:A2:34/attempt/1";
+            var message = new MQTT5PublishMessage
+            {
+                Topic = topic,
+                Payload = Encoding.UTF8.GetBytes(json), // Serialize JSON to UTF-8 bytes
+                QoS = QualityOfService.AtLeastOnceDelivery,
+            };
+
+            var resultPublish = await client.PublishAsync(message).ConfigureAwait(false);
+            Console.WriteLine($"Published {sensorDataList.Count} messages to topic {topic}: {resultPublish.QoS1ReasonCode}");
+
+            if(message_number == 5000){
+                Console.WriteLine("Disconnecting gracefully...");
+                await client.DisconnectAsync().ConfigureAwait(false);
+                return;
+            }
+
+            await Task.Delay(1000).ConfigureAwait(false);
+        }
+    }
 }

@@ -98,23 +98,14 @@ namespace rdds.api.Repositories
             return filteredRoadData;
         }
 
-        public async Task CreateFromMqttAsync(string payload, int attemptId)
+        public async Task CreateFromMqttAsync(List<SensorData> sensorDataList, int attemptId)
         {
             try
             {
-                // Deserialize JSON payload into a list of SensorData
-                var sensorDataList = JsonSerializer.Deserialize<List<SensorData>>(payload);
-
-                if (sensorDataList == null || sensorDataList.Count == 0)
-                {
-                    throw new Exception("Failed to deserialize json");
-                }
-
                 var roadDataList = new List<CreateRoadDataDto>();
 
                 foreach (var sensorData in sensorDataList)
                 {
-
                     // Map SensorData to RoadData
                     var roadData = new CreateRoadDataDto
                     {

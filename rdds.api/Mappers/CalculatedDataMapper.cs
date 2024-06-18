@@ -15,17 +15,16 @@ namespace rdds.api.Mappers
             return new CalculatedDataDto
             {
                 Id = calculatedData.Id,
-                PSD = new PowerSpectralDensity
-                {
-                    Roll = calculatedData.PSD.Roll,
-                    Pitch = calculatedData.PSD.Pitch,
-                    Euclidean = calculatedData.PSD.Euclidean,
-                },
                 IRI = new InternationalRoughnessIndex
                 {
                     Roll = calculatedData.IRI.Roll,
                     Pitch = calculatedData.IRI.Pitch,
                     Euclidean = calculatedData.IRI.Euclidean,
+                    Average = calculatedData.IRI.Average,
+                    RollProfile = calculatedData.IRI.RollProfile,
+                    PitchProfile = calculatedData.IRI.PitchProfile,
+                    EuclideanProfile = calculatedData.IRI.EuclideanProfile,
+                    AverageProfile = calculatedData.IRI.AverageProfile,
                 },
                 Velocity = calculatedData.Velocity,
                 Coordinate = new Coordinate
@@ -48,12 +47,6 @@ namespace rdds.api.Mappers
 
             return new CalculatedData
             {
-                PSD = new PowerSpectralDensity
-                {
-                    Roll = calculatedDataDto.PSDRoll,
-                    Pitch = calculatedDataDto.PSDPitch,
-                    Euclidean = calculatedDataDto.PSDEuclidean
-                },
                 IRI = new InternationalRoughnessIndex
                 {
                     Roll = calculatedDataDto.IRIRoll,

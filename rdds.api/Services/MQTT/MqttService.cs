@@ -13,6 +13,7 @@ using rdds.api.Dtos.RoadData;
 using rdds.api.Interfaces;
 using rdds.api.Mappers;
 using rdds.api.Models;
+using rdds.api.Services.Calculation;
 
 namespace rdds.api.Services.MQTT
 {
@@ -22,13 +23,17 @@ namespace rdds.api.Services.MQTT
         private readonly HiveMQClient _mqttClient;
         private readonly Dictionary<string, List<WebSocket>> _topicToWebSocketsMap;
         private readonly IServiceScopeFactory _scopeFactory;
+        private readonly Dictionary<string, List<string>> _payloadBuffer = new();
+        private const int MaxBufferCount = 3;
+        private readonly CalculationService _calculationService;
 
-        public MqttService(ILogger<MqttService> logger, HiveMQClient mqttClient, IServiceScopeFactory scopeFactory)
+        public MqttService(ILogger<MqttService> logger, HiveMQClient mqttClient, IServiceScopeFactory scopeFactory, CalculationService calculationService)
         {
             _logger = logger;
             _mqttClient = mqttClient;
             _topicToWebSocketsMap = new Dictionary<string, List<WebSocket>>();
             _scopeFactory = scopeFactory;
+            _calculationService = calculationService;
 
             _mqttClient.OnMessageReceived += async (sender, args) =>
             {
@@ -37,34 +42,193 @@ namespace rdds.api.Services.MQTT
                 var topicParts = topic.Split('/');
                 var deviceId = topicParts[2];  // Extract the device ID
                 var attemptId = topicParts[4];  // Extract the attempt ID
-                _logger.LogInformation($"Topic: {topic}, Received payload: {payload}");
-                
+                var key = $"{deviceId}/{attemptId}";
+                // _logger.LogInformation($"Topic: {topic}, Received payload: {payload}");
 
-                    try
-                    {
-                        // Save RoadData to database using CreateAsync method
-                        using (var scope = _scopeFactory.CreateScope())
-                        {
-                            var roadDataRepository = scope.ServiceProvider.GetRequiredService<IRoadDataRepository>();
-                            await roadDataRepository.CreateFromMqttAsync(payload, int.Parse(attemptId));
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError($"Error processing MQTT message: {ex.Message}");
-                    }
-
-                
-    
+                //Validate the topic format
                 if (topicParts.Length == 5 && topicParts[0] == "rdds" && topicParts[1] == "device" && topicParts[3] == "attempt")
                 {
-                    await SendToWebSocketTopicAsync(deviceId, attemptId, payload);
+                    // Add payload to the buffer
+                    // Payload format: [{ timestamp: "YY-MM-DD hh:mm:ss.ms", latitude: xx.xxxxxx, longitude: xx.xxxxxx, velocity: xx.xx, roll: xx.xx, pitch: xx.xx, euclidean: xx,xx}]
+                    lock (_payloadBuffer)
+                    {
+                        if (!_payloadBuffer.ContainsKey(key))
+                        {
+                            _payloadBuffer[key] = new List<string>();
+                        }
+
+                        // Enqueue the new payload
+                        _payloadBuffer[key].Add(payload);
+
+                        // If buffer exceeds the max count, dequeue the oldest payload
+                        if (_payloadBuffer[key].Count == MaxBufferCount)
+                        {
+                            var payloadsToProcess = _payloadBuffer[key].ToList();
+                            _payloadBuffer[key].Clear();
+
+                            // Process the buffered payloads
+                            Task.Run(async () => await ProcessPayloadsAsync(payloadsToProcess, int.Parse(attemptId), deviceId));
+                        }
+                    }
+                    // await SendToWebSocketTopicAsync(deviceId, attemptId, payload);
                 }
                 else
                 {
                     _logger.LogWarning($"Received payload with unmatched topic format: {topic}");
                 }
             };
+        }
+
+        private async Task ProcessPayloadsAsync(List<string> payloads, int attemptId, string deviceId)
+        {
+            try
+            {
+                using (var scope = _scopeFactory.CreateScope())
+                {
+                    //Dependencies
+                    var _roadDataRepo = scope.ServiceProvider.GetRequiredService<IRoadDataRepository>();
+                    var _calculatedDataRepo = scope.ServiceProvider.GetRequiredService<ICalculatedDataRepository>();
+                    
+                    //Payload preps
+                    var roadDataList = new List<CalculateRoadDataDto>();
+                    var payloadList = new List<SensorData>();
+                    foreach (var payload in payloads)
+                    {
+                        var sensorDataList = JsonSerializer.Deserialize<List<SensorData>>(payload);
+
+                        if (sensorDataList == null || sensorDataList.Count == 0)
+                        {
+                            throw new Exception("Failed to deserialize json");
+                        }
+
+                        //Save Road Data
+                        //await _roadDataRepo.CreateFromMqttAsync(sensorDataList, attemptId);
+
+                        // Map SensorData to CalculateRoadDataDto
+                        foreach (var sensorData in sensorDataList)
+                        {
+                            payloadList.Add(sensorData);
+
+                            var roadData = new CalculateRoadDataDto
+                            {
+                                Roll = (float)sensorData.roll,
+                                Pitch = (float)sensorData.pitch,
+                                Euclidean = (float)sensorData.euclidean,
+                            };
+
+                            roadDataList.Add(roadData);
+                        }
+                    }
+                    
+
+                    // Calculate road data to get IRI
+                    int samplingFrequency = 50;
+                    InternationalRoughnessIndex IRIData = CalculateIRI(roadDataList, samplingFrequency);
+
+                    // Save road data
+                    // foreach (var calculatedData in calculatedDataList)
+                    // {
+                    //     await _roadDataRepo.CreateFromMqttAsync(calculatedData);
+                    // }
+
+                    // // Save calculated data
+                    // foreach (var calculatedData in calculatedDataList)
+                    // {
+                    //     await _calculatedDataRepo.SaveAsync(calculatedData);
+                    // }
+
+                    //Generate json websocket payload
+                    var wsPayloads = new List<WebsocketPayload>();
+                    foreach(var p in payloadList)
+                    {
+                        var wsp = new WebsocketPayload
+                        {
+                            Roll = p.roll.ToString(),
+                            Pitch = p.pitch.ToString(),
+                            Euclidean = p.euclidean.ToString(),
+                            IRI = IRIData,
+                            Velocity = p.velocity.ToString(),
+                            Coordinate = new Coordinate {
+                                Latitude = p.latitude,
+                                Longitude = p.longitude,
+                            },
+                            Timestamp = p.timestamp,
+                            AttemptId = attemptId.ToString()
+                        };
+
+                        wsPayloads.Add(wsp);
+                    }
+
+                    var websocketPayloads = JsonSerializer.Serialize(wsPayloads);
+                    
+
+                    //Send to Websocket
+                    await SendToWebSocketTopicAsync(deviceId, attemptId.ToString(), websocketPayloads);
+                    
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error processing payloads: {ex.Message}");
+            }
+        }
+
+        private InternationalRoughnessIndex CalculateIRI(List<CalculateRoadDataDto> roadDataList, int samplingFrequency)
+        {
+            try{
+                // Assuming roadDataList contains sequential data for a segment of time
+                var rollData = roadDataList.Select(rd => (double)rd.Roll).ToArray();
+                var pitchData = roadDataList.Select(rd => (double)rd.Pitch).ToArray();
+                var euclideanData = roadDataList.Select(rd => (double)rd.Euclidean).ToArray();
+
+                var (rollFrequencies, rollPsd) = _calculationService.CalculatePSD(rollData, samplingFrequency);
+                var (pitchFrequencies, pitchPsd) = _calculationService.CalculatePSD(pitchData, samplingFrequency);
+                var (euclideanFrequencies, euclideanPsd) = _calculationService.CalculatePSD(euclideanData, samplingFrequency);
+
+                var iriRoll = _calculationService.CalculateIRI(rollPsd, rollFrequencies);
+                var iriPitch = _calculationService.CalculateIRI(pitchPsd, pitchFrequencies);
+                var iriEuclidean = _calculationService.CalculateIRI(euclideanPsd, euclideanFrequencies);
+                var iriAverage = (iriRoll + iriPitch + iriEuclidean) / 3;
+
+                var IRI = new InternationalRoughnessIndex
+                            {
+                                Roll = (float)iriRoll,
+                                Pitch = (float)iriPitch,
+                                Euclidean = (float)iriEuclidean,
+                                Average = (float)iriAverage,
+                                RollProfile = ClassifyRoadProfile(iriRoll),
+                                PitchProfile = ClassifyRoadProfile(iriPitch),
+                                EuclideanProfile = ClassifyRoadProfile(iriEuclidean),
+                                AverageProfile = ClassifyRoadProfile(iriAverage),
+                            };
+
+                return IRI;
+            }
+            catch(Exception ex)
+            {
+                throw new Exception($"Failed to calculate IRI: {ex}");
+            }
+            
+        }
+
+        private string ClassifyRoadProfile(double iri)
+        {
+            if (iri <= 4)
+            {
+                return "Baik";
+            }
+            else if (iri > 4 && iri <= 8)
+            {
+                return "Sedang";
+            }
+            else if (iri > 8 && iri <= 12)
+            {
+                return "Rusak Ringan";
+            }
+            else // iri > 12
+            {
+                return "Rusak Berat";
+            }
         }
 
         public async Task StartAsync(CancellationToken cancellationToken)
@@ -132,19 +296,26 @@ namespace rdds.api.Services.MQTT
 
         public async Task SendToWebSocketTopicAsync(string deviceId, string attemptId, string payload)
         {
-            var topic = $"{deviceId}/{attemptId}";
+            try{
+                var topic = $"{deviceId}/{attemptId}";
 
-            if (_topicToWebSocketsMap.TryGetValue(topic, out var webSockets))
-            {
-                foreach (var webSocket in webSockets)
+                if (_topicToWebSocketsMap.TryGetValue(topic, out var webSockets))
                 {
-                    await SendToWebSocketAsync(webSocket, payload);
+                    foreach (var webSocket in webSockets)
+                    {
+                        await SendToWebSocketAsync(webSocket, payload);
+                    }
+                }
+                else
+                {
+                    _logger.LogWarning($"No WebSocket clients registered for topic: {topic}");
                 }
             }
-            else
+            catch (Exception ex)
             {
-                _logger.LogWarning($"No WebSocket clients registered for topic: {topic}");
+                throw new Exception($"Failed to send websocket: {ex.Message}");
             }
+            
         }
 
         private async Task SendToWebSocketAsync(WebSocket webSocket, string message)
