@@ -8,6 +8,5 @@ namespace rdds.api.Dtos.Device
     public class UpdateDeviceDto
     {
         public string? DeviceName { get; set; }
-        public DateTime LastModified { get; set; } = DateTime.Now;
     }
 }

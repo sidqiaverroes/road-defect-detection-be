@@ -83,17 +83,12 @@ namespace rdds.api.Repositories
             return result.MacAddress;
         }
 
-        public async Task<Device?> UpdateAsync(string mac, UpdateDeviceDto deviceDto)
+        public async Task<Device?> UpdateAsync(string mac, Device deviceModel)
         {
             var existingDevice = await _context.Devices.FirstOrDefaultAsync(m => m.MacAddress == mac);
-            
-            if (existingDevice == null)
-            {
-                return null;
-            }
 
-            existingDevice.DeviceName = deviceDto.DeviceName;
-            existingDevice.LastModified = deviceDto.LastModified;
+            existingDevice.DeviceName = deviceModel.DeviceName;
+            existingDevice.LastModified = deviceModel.LastModified;
 
             await _context.SaveChangesAsync();
 

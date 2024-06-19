@@ -27,6 +27,16 @@ namespace rdds.api.Mappers
             {
                 MacAddress = deviceDto.MacAddress,
                 DeviceName = deviceDto.DeviceName,
+                CreatedOn = DateTime.Now,
+            };
+        }
+
+        public static Device ToDeviceFromUpdate(this UpdateDeviceDto deviceDto)
+        {
+            return new Device
+            {
+                DeviceName = deviceDto.DeviceName,
+                LastModified = DateTime.Now,
             };
         }
     }

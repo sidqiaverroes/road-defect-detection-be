@@ -32,7 +32,6 @@ namespace rdds.api.Controllers
         }
 
         [Authorize]
-        [EnableCors]
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
@@ -105,6 +104,37 @@ namespace rdds.api.Controllers
             deviceModel.AppUserId = AppUser.Id;
             await _deviceRepo.CreateAsync(deviceModel);
             return CreatedAtAction(nameof(GetByMacAddress), new {mac = deviceModel.MacAddress}, deviceModel.ToDeviceDto());
+        }
+
+        [HttpPut("{mac}")]
+        public async Task<IActionResult> Update([FromRoute] string mac, [FromBody] UpdateDeviceDto updateDeviceDto)
+        {
+            var existingDevice = await _deviceRepo.GetByMacAddressAsync(mac);
+            if (existingDevice == null)
+            {
+                return NotFound();
+            }
+            
+            var deviceModel = updateDeviceDto.ToDeviceFromUpdate();
+            // Save changes
+            var device = await _deviceRepo.UpdateAsync(mac, deviceModel);
+
+            return Ok(device.ToDeviceDto());
+        }
+
+        [HttpDelete("{mac}")]
+        public async Task<IActionResult> Delete([FromRoute] string mac)
+        {
+            var existingDevice = await _deviceRepo.GetByMacAddressAsync(mac);
+            if (existingDevice == null)
+            {
+                return NotFound();
+            }
+
+            // Delete the device
+            await _deviceRepo.DeleteAsync(mac);
+
+            return NoContent();
         }
     }
 }

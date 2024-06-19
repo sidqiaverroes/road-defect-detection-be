@@ -12,7 +12,7 @@ namespace rdds.api.Interfaces
         Task<List<Device>> GetAllAsync(string userId);
         Task<Device?> GetByMacAddressAsync(string mac);
         Task<Device> CreateAsync(Device deviceModel);
-        Task<Device?> UpdateAsync(string mac, UpdateDeviceDto deviceDto);
+        Task<Device?> UpdateAsync(string mac, Device deviceDto);
         Task<Device?> DeleteAsync(string mac);
         Task<string?> IsExistedAsync(string mac);
 

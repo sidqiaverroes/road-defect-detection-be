@@ -15,7 +15,7 @@ namespace rdds.api.Models
         public string MacAddress {get; set;} = string.Empty;
         [Required(ErrorMessage = "Device name is required.")]
         public string DeviceName { get; set; } = string.Empty;
-        public DateTime CreatedOn { get; set; } = DateTime.Now;
+        public DateTime CreatedOn { get; set; }
         public DateTime LastModified { get; set; } = DateTime.Now;
         public string AppUserId { get; set; }
         public AppUser AppUser { get; set; }
