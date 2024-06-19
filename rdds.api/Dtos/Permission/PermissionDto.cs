@@ -3,12 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace rdds.api.Dtos.AccessType
+namespace rdds.api.Dtos.Permission
 {
-    public class AccessTypeDto
+    public class PermissionDto
     {
         public int Id { get; set; }
         public string Name { get; set; }
-        public ICollection<string> Accesses { get; set; }
     }
 }

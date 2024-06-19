@@ -8,7 +8,6 @@ using rdds.api.Interfaces;
 using rdds.api.Models;
 using rdds.api.Dtos.Account;
 using Microsoft.AspNetCore.Identity;
-using rdds.api.Dtos.AccessType;
 using rdds.api.Mappers;
 
 namespace rdds.api.Repositories
@@ -34,12 +33,13 @@ namespace rdds.api.Repositories
 
             var userIdsInRole = usersInRole.Select(u => u.Id).ToList();
 
-            var usersWithAccessTypes = await _context.Users
+            var usersWithPermissions = await _context.Users
+                .Include(u => u.UserPermissions)
+                .ThenInclude(up => up.Permission)
                 .Where(u => userIdsInRole.Contains(u.Id))
-                .Include(u => u.AccessType)
                 .ToListAsync();
 
-            var userDtos = usersWithAccessTypes.Select(u => u.ToUserDto()).ToList();
+            var userDtos = usersWithPermissions.Select(u => u.ToUserDto()).ToList();
 
             return userDtos;
         }
@@ -47,7 +47,8 @@ namespace rdds.api.Repositories
         public async Task<AppUser> GetUserByIdAsync(string userId)
         {
             var user = await _context.Users
-                .Include(u => u.AccessType) 
+                .Include(u => u.UserPermissions) // Include UserPermissions navigation property
+                    .ThenInclude(up => up.Permission) // Include Permission navigation property
                 .FirstOrDefaultAsync(u => u.Id == userId);
 
             if (user == null)
@@ -58,27 +59,36 @@ namespace rdds.api.Repositories
             return user;
         }
 
-        public async Task UpdateUserAccessAsync(string userId, int accessTypeId)
+        public async Task UpdateUserPermissionsAsync(string userId, List<int> permissionIds)
         {
-           
-            var user = await _context.Users.FindAsync(userId);
+            var user = await _context.Users
+                .Include(u => u.UserPermissions)
+                .ThenInclude(up => up.Permission)
+                .FirstOrDefaultAsync(u => u.Id == userId);
 
             if (user == null)
             {
                 throw new ArgumentException("User not found", nameof(userId));
             }
 
-            var accessType = await _context.AccessTypes.FindAsync(accessTypeId);
+            // Clear existing permissions
+            user.UserPermissions.Clear();
 
-            if (accessType == null)
+            // Add new permissions based on permissionIds
+            foreach (var permissionId in permissionIds)
             {
-                throw new ArgumentException("AccessType not found", nameof(accessTypeId));
+                var permission = await _context.Permissions.FindAsync(permissionId);
+                if (permission != null)
+                {
+                    user.UserPermissions.Add(new UserPermission
+                    {
+                        UserId = userId,
+                        PermissionId = permissionId
+                    });
+                }
             }
 
-            user.AccessTypeId = accessTypeId;
-
             await _context.SaveChangesAsync();
-        
         }
 
     }

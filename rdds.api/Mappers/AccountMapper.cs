@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using rdds.api.Dtos.AccessType;
 using rdds.api.Dtos.Account;
+using rdds.api.Dtos.Permission;
 using rdds.api.Models;
 
 namespace rdds.api.Mappers
@@ -17,12 +17,13 @@ namespace rdds.api.Mappers
                 Id = userModel.Id,
                 Username = userModel.UserName,
                 Email = userModel.Email,
-                AccessType = new AccessTypeDto
-                {
-                    Id = userModel.AccessType.Id,
-                    Name = userModel.AccessType.Name,
-                    Accesses = userModel.AccessType.Accesses
-                }
+                Permissions = userModel.UserPermissions
+                    .Select(up => new PermissionDto
+                    {
+                        Id = up.Permission.Id,
+                        Name = up.Permission.Name
+                    })
+                    .ToList()
             };
         }
     }

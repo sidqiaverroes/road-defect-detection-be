@@ -20,8 +20,9 @@ namespace rdds.api.Data
         public DbSet<Attempt> Attempts {get; set;}
         public DbSet<RoadData> RoadDatas { get; set; }
         public DbSet<CalculatedData> CalculatedDatas { get; set; }
-        public DbSet<AccessType> AccessTypes { get; set; }
         public DbSet<RoadCategory> RoadCategories { get; set; }
+        public DbSet<Permission> Permissions { get; set; }
+        public DbSet<UserPermission> UserPermissions { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -40,15 +41,8 @@ namespace rdds.api.Data
                     NormalizedName = "USER"
                 },
             };
-
-            List<AccessType> accessTypes = new List<AccessType>
-            {
-                new AccessType { Id = 1, Name = "Admin", Accesses = new List<string> { "read", "write", "update", "delete" } },
-                new AccessType { Id = 2, Name = "User", Accesses = new List<string> { "read" } }
-            };
             
             builder.Entity<IdentityRole>().HasData(roles);
-            builder.Entity<AccessType>().HasData(accessTypes);
 
             builder.Entity<RoadData>()
             .OwnsOne(rd => rd.Coordinate, coord =>
@@ -94,17 +88,19 @@ namespace rdds.api.Data
             .HasForeignKey(rd => rd.AttemptId)
             .OnDelete(DeleteBehavior.Cascade);;
             
-            // Configure many-to-many relationship between AppUser and AccessType
-            builder.Entity<AppUser>()
-            .HasOne(u => u.AccessType)
-            .WithMany(a => a.Users)
-            .HasForeignKey(u => u.AccessTypeId)
-            .OnDelete(DeleteBehavior.Restrict);
+            // Configure many-to-many relationship between AppUser and Permission
+            builder.Entity<UserPermission>()
+            .HasKey(up => new { up.UserId, up.PermissionId });
 
-            builder.Entity<AccessType>()
-            .HasMany(a => a.Users)
-            .WithOne(rd => rd.AccessType)
-            .HasForeignKey(rd => rd.AccessTypeId);
+            builder.Entity<UserPermission>()
+                .HasOne(aup => aup.User)
+                .WithMany(au => au.UserPermissions)
+                .HasForeignKey(aup => aup.UserId);
+
+            builder.Entity<UserPermission>()
+                .HasOne(aup => aup.Permission)
+                .WithMany(p => p.UserPermissions)
+                .HasForeignKey(aup => aup.PermissionId);
 
             builder.Entity<RoadCategory>()
             .HasMany(rc => rc.Attempts)

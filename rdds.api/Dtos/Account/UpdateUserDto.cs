@@ -18,6 +18,6 @@ namespace rdds.api.Dtos.Account
     {
         public string NewPassword { get; set; }
         public string NewUsername { get; set; }
-        public int AccessTypeId { get; set; }
+        public List<int> PermissionId { get; set; }
     }
 }

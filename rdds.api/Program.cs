@@ -94,6 +94,14 @@ builder.Services.AddAuthentication(options =>
         )
     };
 });
+
+builder.Services.AddAuthorization(options =>
+    {
+        options.AddPolicy("Admin", policy =>
+        {
+            policy.RequireRole("Admin");
+        });
+    });
 // AUTH SECTION END
 
 builder.Services.AddScoped<IAccountRepository, AccountRepository>();
@@ -101,7 +109,7 @@ builder.Services.AddScoped<IDeviceRepository, DeviceRepository>();
 builder.Services.AddScoped<IAttemptRepository, AttemptRepository>();
 builder.Services.AddScoped<IRoadDataRepository, RoadDataRepository>();
 builder.Services.AddScoped<ITokenService, TokenService>();
-builder.Services.AddScoped<IAccessTypeRepository, AccessTypeRepository>();
+// builder.Services.AddScoped<IAccessTypeRepository, AccessTypeRepository>();
 builder.Services.AddScoped<IRoadCategoryRepository, RoadCategoryRepository>();
 builder.Services.AddScoped<ICalculatedDataRepository, CalculatedDataRepository>();
 builder.Services.AddSingleton<CalculationService>();

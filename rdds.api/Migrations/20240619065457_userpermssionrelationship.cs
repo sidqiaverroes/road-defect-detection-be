@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -10,25 +9,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace rdds.api.Migrations
 {
     /// <inheritdoc />
-    public partial class @new : Migration
+    public partial class userpermssionrelationship : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.CreateTable(
-                name: "AccessTypes",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Name = table.Column<string>(type: "text", nullable: false),
-                    Accesses = table.Column<List<string>>(type: "text[]", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_AccessTypes", x => x.Id);
-                });
-
             migrationBuilder.CreateTable(
                 name: "AspNetRoles",
                 columns: table => new
@@ -44,25 +29,10 @@ namespace rdds.api.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "RoadCategories",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Name = table.Column<string>(type: "text", nullable: false),
-                    TotalLength = table.Column<float>(type: "real", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_RoadCategories", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "AspNetUsers",
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "text", nullable: false),
-                    AccessTypeId = table.Column<int>(type: "integer", nullable: false),
                     UserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
@@ -81,12 +51,33 @@ namespace rdds.api.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_AspNetUsers", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_AspNetUsers_AccessTypes_AccessTypeId",
-                        column: x => x.AccessTypeId,
-                        principalTable: "AccessTypes",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Permissions",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Permissions", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "RoadCategories",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    TotalLength = table.Column<float>(type: "real", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_RoadCategories", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -217,6 +208,30 @@ namespace rdds.api.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "UserPermissions",
+                columns: table => new
+                {
+                    UserId = table.Column<string>(type: "text", nullable: false),
+                    PermissionId = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UserPermissions", x => new { x.UserId, x.PermissionId });
+                    table.ForeignKey(
+                        name: "FK_UserPermissions_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_UserPermissions_Permissions_PermissionId",
+                        column: x => x.PermissionId,
+                        principalTable: "Permissions",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Attempts",
                 columns: table => new
                 {
@@ -249,17 +264,45 @@ namespace rdds.api.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "CalculatedDatas",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    IRI_Roll = table.Column<float>(type: "real", nullable: false),
+                    IRI_Pitch = table.Column<float>(type: "real", nullable: false),
+                    IRI_Euclidean = table.Column<float>(type: "real", nullable: false),
+                    IRI_Average = table.Column<float>(type: "real", nullable: false),
+                    Roll_Profile = table.Column<string>(type: "text", nullable: true),
+                    Pitch_Profile = table.Column<string>(type: "text", nullable: true),
+                    Euclidean_Profile = table.Column<string>(type: "text", nullable: true),
+                    Average_Profile = table.Column<string>(type: "text", nullable: true),
+                    Velocity = table.Column<float>(type: "real", nullable: false),
+                    Latitude = table.Column<float>(type: "real", nullable: false),
+                    Longitude = table.Column<float>(type: "real", nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    AttemptId = table.Column<int>(type: "integer", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CalculatedDatas", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_CalculatedDatas_Attempts_AttemptId",
+                        column: x => x.AttemptId,
+                        principalTable: "Attempts",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
                 name: "RoadDatas",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Roll = table.Column<float>(type: "real", nullable: false),
                     Pitch = table.Column<float>(type: "real", nullable: false),
-                    Yaw = table.Column<float>(type: "real", nullable: false),
                     Euclidean = table.Column<float>(type: "real", nullable: false),
                     Velocity = table.Column<float>(type: "real", nullable: false),
-                    Coordinate_Latitude = table.Column<float>(type: "real", nullable: false),
-                    Coordinate_Longitude = table.Column<float>(type: "real", nullable: false),
+                    Latitude = table.Column<float>(type: "real", nullable: false),
+                    Longitude = table.Column<float>(type: "real", nullable: false),
                     Timestamp = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     AttemptId = table.Column<int>(type: "integer", nullable: true)
                 },
@@ -275,21 +318,12 @@ namespace rdds.api.Migrations
                 });
 
             migrationBuilder.InsertData(
-                table: "AccessTypes",
-                columns: new[] { "Id", "Accesses", "Name" },
-                values: new object[,]
-                {
-                    { 1, new List<string> { "read", "write", "update", "delete" }, "Admin" },
-                    { 2, new List<string> { "read" }, "User" }
-                });
-
-            migrationBuilder.InsertData(
                 table: "AspNetRoles",
                 columns: new[] { "Id", "ConcurrencyStamp", "Name", "NormalizedName" },
                 values: new object[,]
                 {
-                    { "033473b3-7bde-41e9-bc79-7441ef21c550", null, "Admin", "ADMIN" },
-                    { "04e42a4c-017d-494a-ac50-a06c1b0e890a", null, "User", "USER" }
+                    { "8f2dba8d-3612-4b25-a0eb-0a10668531df", null, "User", "USER" },
+                    { "ffa4166a-8edc-462d-bbc7-cd7388c2f466", null, "Admin", "ADMIN" }
                 });
 
             migrationBuilder.CreateIndex(
@@ -324,11 +358,6 @@ namespace rdds.api.Migrations
                 column: "NormalizedEmail");
 
             migrationBuilder.CreateIndex(
-                name: "IX_AspNetUsers_AccessTypeId",
-                table: "AspNetUsers",
-                column: "AccessTypeId");
-
-            migrationBuilder.CreateIndex(
                 name: "UserNameIndex",
                 table: "AspNetUsers",
                 column: "NormalizedUserName",
@@ -345,6 +374,11 @@ namespace rdds.api.Migrations
                 column: "RoadCategoryId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_CalculatedDatas_AttemptId",
+                table: "CalculatedDatas",
+                column: "AttemptId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Devices_AppUserId",
                 table: "Devices",
                 column: "AppUserId");
@@ -353,6 +387,11 @@ namespace rdds.api.Migrations
                 name: "IX_RoadDatas_AttemptId",
                 table: "RoadDatas",
                 column: "AttemptId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserPermissions_PermissionId",
+                table: "UserPermissions",
+                column: "PermissionId");
         }
 
         /// <inheritdoc />
@@ -374,13 +413,22 @@ namespace rdds.api.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
+                name: "CalculatedDatas");
+
+            migrationBuilder.DropTable(
                 name: "RoadDatas");
+
+            migrationBuilder.DropTable(
+                name: "UserPermissions");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");
 
             migrationBuilder.DropTable(
                 name: "Attempts");
+
+            migrationBuilder.DropTable(
+                name: "Permissions");
 
             migrationBuilder.DropTable(
                 name: "Devices");
@@ -390,9 +438,6 @@ namespace rdds.api.Migrations
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");
-
-            migrationBuilder.DropTable(
-                name: "AccessTypes");
         }
     }
 }

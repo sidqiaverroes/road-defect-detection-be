@@ -23,30 +23,18 @@ namespace rdds.api.Controllers
         private readonly ITokenService _tokenService;
         private readonly SignInManager<AppUser> _signinManager;
         private readonly IAccountRepository _accountRepo;
-        private readonly IAccessTypeRepository _accessTypeRepo;
-        public AccountController(UserManager<AppUser> userManager, ITokenService tokenService, SignInManager<AppUser> signInManager, IAccountRepository accountRepo, IAccessTypeRepository accessTypeRepo)
+        public AccountController(UserManager<AppUser> userManager, ITokenService tokenService, SignInManager<AppUser> signInManager, IAccountRepository accountRepo)
         {
             _userManager = userManager;
             _tokenService = tokenService;
             _signinManager = signInManager;
             _accountRepo = accountRepo;
-            _accessTypeRepo = accessTypeRepo;
         }
 
-        [Authorize]
+        [Authorize("Admin")]
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var username = User.GetUsername();
-            var authuser = await _userManager.FindByNameAsync(username);
-            if (authuser == null)
-            {
-                return Unauthorized("You are not registered.");
-            }
-            if (!await _userManager.IsInRoleAsync(authuser, "Admin"))
-            {
-                return Unauthorized("You are not Admin.");
-            }
 
             var usersWithRole = await _accountRepo.GetAllAsync();
 
@@ -58,20 +46,12 @@ namespace rdds.api.Controllers
             return Ok(usersWithRole);
         }
 
-        [Authorize]
+        [Authorize("Admin")]
         [HttpGet("get-admin-profile")]
         public async Task<IActionResult> GetAdminProfile()
         {
             var username = User.GetUsername();
             var adminUser = await _userManager.FindByNameAsync(username);
-            if (adminUser == null)
-            {
-                return NotFound("Admin user not found");
-            }
-            if(!await _userManager.IsInRoleAsync(adminUser, "Admin"))
-            {
-                return Unauthorized("You are not Admin.");
-            }
 
             var adminProfile = new AdminProfileDto
             {
@@ -96,36 +76,24 @@ namespace rdds.api.Controllers
             return Ok(user.ToUserDto());
         }
 
-        [Authorize]
+        [Authorize("Admin")]
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto registerDto)
         {
-            var username = User.GetUsername();
-            var authuser = await _userManager.FindByNameAsync(username);
-            if (authuser == null)
-            {
-                return Unauthorized("You are not registered.");
-            }
-            if (!await _userManager.IsInRoleAsync(authuser, "Admin"))
-            {
-                return Unauthorized("You are not Admin.");
-            }
 
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            // Retrieve the AccessType for "User"
-            var userAccessType = await _accessTypeRepo.GetAccessTypeByNameAsync("User");
-            if (userAccessType == null)
+            var newUser = await _userManager.FindByNameAsync(registerDto.Username);
+            if(newUser != null)
             {
-                return StatusCode(500, "Default AccessType 'User' not found.");
+                return BadRequest("Username already taken.");
             }
 
             var appUser = new AppUser
             {
                 UserName = registerDto.Username,
                 Email = registerDto.Email,
-                AccessTypeId = userAccessType.Id // Assign the AccessTypeId here
             };
 
             var createdUser = await _userManager.CreateAsync(appUser, registerDto.Password);
@@ -140,7 +108,7 @@ namespace rdds.api.Controllers
                         {
                             UserName = appUser.UserName,
                             Email = appUser.Email,
-                            Token = _tokenService.CreateToken(appUser)
+                            Token = await _tokenService.CreateToken(appUser)
                         }
                     );
                 }
@@ -175,12 +143,12 @@ namespace rdds.api.Controllers
                 {
                     UserName = user.UserName,
                     Email = user.Email,
-                    Token = _tokenService.CreateToken(user)
+                    Token = await _tokenService.CreateToken(user)
                 }
             );
         }
 
-        [Authorize]
+        [Authorize("Admin")]
         [HttpPut("update-admin")]
         public async Task<IActionResult> UpdateAdmin([FromBody] UpdateAdminDto model)
         {
@@ -189,10 +157,6 @@ namespace rdds.api.Controllers
             if (authuser == null)
             {
                 return Unauthorized("You are not registered.");
-            }
-            if(!await _userManager.IsInRoleAsync(authuser, "Admin"))
-            {
-                return Unauthorized("You are not Admin.");
             }
 
             if (!ModelState.IsValid)
@@ -222,22 +186,10 @@ namespace rdds.api.Controllers
             return Ok("Admin profile updated successfully");
         }
 
-        [Authorize]
+        [Authorize("Admin")]
         [HttpPut("update-user-details/{userId}")]
         public async Task<IActionResult> UpdateUserDetails(string userId, [FromBody] UpdateUserDetailsDto model)
         {
-            var username = User.GetUsername();
-            var authUser = await _userManager.FindByNameAsync(username);
-
-            if (authUser == null)
-            {
-                return Unauthorized("You are not registered.");
-            }
-
-            if (!await _userManager.IsInRoleAsync(authUser, "Admin"))
-            {
-                return Unauthorized("You are not Admin.");
-            }
 
             var user = await _userManager.FindByIdAsync(userId);
 
@@ -249,7 +201,7 @@ namespace rdds.api.Controllers
             // Update Password
             if (!string.IsNullOrEmpty(model.NewPassword))
             {
-                if (await _userManager.IsInRoleAsync(user, "Admin"))
+                if (!User.IsInRole("Admin"))
                 {
                     return BadRequest("This user's password cannot be changed this way.");
                 }
@@ -274,16 +226,22 @@ namespace rdds.api.Controllers
                 }
             }
 
-            // Update User Access Type
-            if (model.AccessTypeId > 0)
+            // Update Permissions based on PermissionId list
+            try
             {
-                await _accountRepo.UpdateUserAccessAsync(userId, model.AccessTypeId);
+                var permissionIds = model.PermissionId ?? new List<int>();
+                await _accountRepo.UpdateUserPermissionsAsync(userId, permissionIds);
             }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"An unexpected error occurred: {ex.Message}");
+            }
+            
 
             return Ok("User details updated successfully");
         }
 
-        [Authorize]
+        [Authorize("Admin")]
         [HttpDelete("delete/{userId}")]
         public async Task<IActionResult> DeleteUser(string userId)
         {
