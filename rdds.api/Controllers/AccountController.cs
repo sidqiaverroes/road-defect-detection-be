@@ -10,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using rdds.api.Dtos.Account;
 using rdds.api.Extensions;
 using rdds.api.Interfaces;
+using rdds.api.Mappers;
 using rdds.api.Models;
 
 namespace rdds.api.Controllers
@@ -79,6 +80,20 @@ namespace rdds.api.Controllers
             };
 
             return Ok(adminProfile);
+        }
+
+        [Authorize]
+        [HttpGet("{userId}")]
+        public async Task<IActionResult> GetUserById(string userId)
+        {
+            var user = await _accountRepo.GetUserByIdAsync(userId);
+
+            if (user == null)
+            {
+                return NotFound("User not found");
+            }
+
+            return Ok(user.ToUserDto());
         }
 
         [Authorize]

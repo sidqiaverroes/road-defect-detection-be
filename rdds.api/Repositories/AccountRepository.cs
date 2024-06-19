@@ -9,6 +9,7 @@ using rdds.api.Models;
 using rdds.api.Dtos.Account;
 using Microsoft.AspNetCore.Identity;
 using rdds.api.Dtos.AccessType;
+using rdds.api.Mappers;
 
 namespace rdds.api.Repositories
 {
@@ -38,20 +39,23 @@ namespace rdds.api.Repositories
                 .Include(u => u.AccessType)
                 .ToListAsync();
 
-            var userDtos = usersWithAccessTypes.Select(u => new UserDto
-            {
-                Id = u.Id,
-                UserName = u.UserName,
-                Email = u.Email,
-                AccessType = new AccessTypeDto
-                {
-                    Id = u.AccessType.Id,
-                    Name = u.AccessType.Name,
-                    Accesses = u.AccessType.Accesses
-                }
-            }).ToList();
+            var userDtos = usersWithAccessTypes.Select(u => u.ToUserDto()).ToList();
 
             return userDtos;
+        }
+
+        public async Task<AppUser> GetUserByIdAsync(string userId)
+        {
+            var user = await _context.Users
+                .Include(u => u.AccessType) 
+                .FirstOrDefaultAsync(u => u.Id == userId);
+
+            if (user == null)
+            {
+                return null;
+            }
+
+            return user;
         }
 
         public async Task UpdateUserAccessAsync(string userId, int accessTypeId)
