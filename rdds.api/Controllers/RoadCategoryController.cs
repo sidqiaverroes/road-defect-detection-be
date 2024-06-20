@@ -32,6 +32,7 @@ namespace rdds.api.Controllers
             _accountRepo = accountRepo;
         }
 
+        [EnableCors]
         [Authorize]
         [HttpGet]
         public async Task<IActionResult> GetAll()
@@ -64,6 +65,7 @@ namespace rdds.api.Controllers
             return Ok(roadCategoryDtos);
         }
 
+        [EnableCors]
         [Authorize]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById([FromRoute] int id)
@@ -99,6 +101,7 @@ namespace rdds.api.Controllers
             return Ok(roadCategory.ToRoadCategoryDto());
         }
 
+        [EnableCors]
         [Authorize]
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateRoadCategoryDto newRoadCategoryDto)
@@ -130,6 +133,7 @@ namespace rdds.api.Controllers
             return CreatedAtAction(nameof(GetById), new { id = createdRoadCategory.Id }, createdRoadCategory.ToRoadCategoryDto());
         }
 
+        [EnableCors]
         [Authorize]
         [HttpPut("edit/{id}")]
         public async Task<IActionResult> Update([FromRoute] int id, [FromBody] UpdateRoadCategoryDto updateDto)
@@ -168,6 +172,7 @@ namespace rdds.api.Controllers
             return Ok(roadCategory.ToRoadCategoryDto());
         }
 
+        [EnableCors]
         [Authorize]
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete([FromRoute] int id)

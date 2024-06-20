@@ -34,6 +34,7 @@ namespace rdds.api.Controllers
             _accountRepo = accountRepo;
         }
 
+        [EnableCors]
         [Authorize]
         [HttpGet]
         public async Task<IActionResult> GetAll()
@@ -62,6 +63,7 @@ namespace rdds.api.Controllers
             return Ok(deviceDto);
         }
 
+        [EnableCors]
         [Authorize]
         [HttpGet("{mac}")]
         public async Task<IActionResult> GetByMacAddress([FromRoute] string mac)
@@ -94,6 +96,7 @@ namespace rdds.api.Controllers
             return Ok(device.ToDeviceDto());
         }
 
+        [EnableCors]
         [Authorize]
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateDeviceDto deviceDto)
@@ -148,6 +151,7 @@ namespace rdds.api.Controllers
             return CreatedAtAction(nameof(GetByMacAddress), new {mac = deviceModel.MacAddress}, deviceModel.ToDeviceDto());
         }
 
+        [EnableCors]
         [Authorize]
         [HttpPut("{mac}")]
         public async Task<IActionResult> Update([FromRoute] string mac, [FromBody] UpdateDeviceDto updateDeviceDto)
@@ -183,6 +187,7 @@ namespace rdds.api.Controllers
             return Ok(device.ToDeviceDto());
         }
 
+        [EnableCors]
         [Authorize]
         [HttpDelete("{mac}")]
         public async Task<IActionResult> Delete([FromRoute] string mac)

@@ -34,6 +34,7 @@ namespace rdds.api.Controllers
             _accountRepo = accountRepo;
         }
 
+        [EnableCors]
         [Authorize]
         [HttpGet("{deviceMac}")]
         public async Task<IActionResult> GetAllByFilter([FromRoute] string deviceMac, [FromQuery] int? attemptId = null, [FromQuery] string startDate = "", [FromQuery] string endDate = "")

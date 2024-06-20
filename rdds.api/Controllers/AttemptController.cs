@@ -34,6 +34,7 @@ namespace rdds.api.Controllers
             _accountRepo = accountRepo;
         }
 
+        [EnableCors]
         [Authorize]
         [HttpGet]
         public async Task<IActionResult> GetAll()
@@ -66,6 +67,7 @@ namespace rdds.api.Controllers
             return Ok(attemptDto);
         }
 
+        [EnableCors]
         [Authorize]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById([FromRoute] int id)
@@ -101,6 +103,7 @@ namespace rdds.api.Controllers
             return Ok(attempt.ToAttemptDto());
         }
 
+        [EnableCors]
         [Authorize]
         [HttpPost("{deviceMac}")]
         public async Task<IActionResult> Create([FromRoute] string deviceMac, CreateAttemptDto attemptDto)
@@ -143,6 +146,7 @@ namespace rdds.api.Controllers
             return CreatedAtAction(nameof(GetById), new {id = attemptModel}, attemptModel.ToAttemptDto());
         }
 
+        [EnableCors]
         [Authorize]
         [HttpPut("edit/{id}")]
         public async Task<IActionResult> Update([FromRoute] int id, [FromBody] UpdateAttemptDto updateDto)
@@ -181,6 +185,7 @@ namespace rdds.api.Controllers
             return Ok(attempt.ToAttemptDto());
         }
 
+        [EnableCors]
         [Authorize]
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete([FromRoute] int id)
