@@ -147,6 +147,7 @@ namespace rdds.api.Controllers
             return CreatedAtAction(nameof(GetByMacAddress), new {mac = deviceModel.MacAddress}, deviceModel.ToDeviceDto());
         }
 
+        [Authorize]
         [HttpPut("{mac}")]
         public async Task<IActionResult> Update([FromRoute] string mac, [FromBody] UpdateDeviceDto updateDeviceDto)
         {
@@ -181,6 +182,7 @@ namespace rdds.api.Controllers
             return Ok(device.ToDeviceDto());
         }
 
+        [Authorize]
         [HttpDelete("{mac}")]
         public async Task<IActionResult> Delete([FromRoute] string mac)
         {
