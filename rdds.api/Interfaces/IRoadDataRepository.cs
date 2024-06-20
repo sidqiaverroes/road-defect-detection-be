@@ -9,7 +9,7 @@ namespace rdds.api.Interfaces
 {
     public interface IRoadDataRepository
     {
-        Task<List<RoadData>> GetAllByFilterAsync(int? attemptId, string startDate, string endDate, float minVelocity, float maxVelocity);
+        Task<List<RoadData>> GetAllByFilterAsync(int? attemptId, string startDate, string endDate);
         Task<bool> CreateAsync(IEnumerable<CreateRoadDataDto> roadDataModels, int attemptId);
         Task<bool> DeleteAllAsync();
         Task CreateFromMqttAsync(List<SensorData> payload, int attemptId);

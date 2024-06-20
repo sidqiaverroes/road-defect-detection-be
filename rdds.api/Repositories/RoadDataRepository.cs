@@ -62,7 +62,7 @@ namespace rdds.api.Repositories
             }
         }
 
-        public async Task<List<RoadData>> GetAllByFilterAsync(int? attemptId, string startDate = "", string endDate = "", float minVelocity = 0, float maxVelocity = 0)
+        public async Task<List<RoadData>> GetAllByFilterAsync(int? attemptId, string startDate = "", string endDate = "")
         {
             DateTime? startDateTime = null;
             DateTime? endDateTime = null;
@@ -87,16 +87,6 @@ namespace rdds.api.Repositories
             if (attemptId.HasValue)
             {
                 query = query.Where(rd => rd.AttemptId == attemptId.Value);
-            }
-
-            if (minVelocity > 0)
-            {
-                query = query.Where(rd => rd.Velocity >= minVelocity);
-            }
-
-            if (maxVelocity > 0)
-            {
-                query = query.Where(rd => rd.Velocity <= maxVelocity);
             }
 
             if (startDateTime.HasValue)

@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using rdds.api.Dtos.RoadData;
+using rdds.api.Extensions;
 using rdds.api.Interfaces;
 using rdds.api.Mappers;
 using rdds.api.Models;
@@ -18,17 +20,40 @@ namespace rdds.api.Controllers
         private readonly IRoadDataRepository _roadDataRepo;
         private readonly IDeviceRepository _deviceRepo;
         private readonly IAttemptRepository _attemptRepo;
+        private readonly UserManager<AppUser> _userManager;
+        private readonly IAccountRepository _accountRepo;
 
-        public RoadDataController(IRoadDataRepository roadDataRepo, IDeviceRepository deviceRepo, IAttemptRepository attemptRepo)
+        public RoadDataController(IRoadDataRepository roadDataRepo, IDeviceRepository deviceRepo, IAttemptRepository attemptRepo, UserManager<AppUser> userManager, IAccountRepository accountRepo)
         {
             _roadDataRepo = roadDataRepo;
             _deviceRepo = deviceRepo;
             _attemptRepo = attemptRepo;
+            _userManager = userManager;
+            _accountRepo = accountRepo;
         }
 
+        [Authorize]
         [HttpGet("{deviceMac}")]
-        public async Task<IActionResult> GetAllByFilter([FromRoute] string deviceMac, [FromQuery] int? attemptId = null, [FromQuery] string startDate = "", [FromQuery] string endDate = "", [FromQuery] float minVelocity = 0, [FromQuery] float maxVelocity = 0)
+        public async Task<IActionResult> GetAllByFilter([FromRoute] string deviceMac, [FromQuery] int? attemptId = null, [FromQuery] string startDate = "", [FromQuery] string endDate = "")
         {
+            var username = User.GetUsername();
+            if (username == null)
+            {
+                return BadRequest("You are not authorized.");
+            }
+            var AppUser = await _userManager.FindByNameAsync(username);
+
+            // Authorization of User Permission
+            if(User.IsInRole("User") && AppUser != null)
+            {
+                var authUser = await _accountRepo.GetUserByIdAsync(AppUser.Id);
+                var permissions = authUser.UserPermissions.Select(up => up.Permission.Id).ToList();
+                var isAuthorized = permissions.Any(p => p == 301);
+                if(!isAuthorized){
+                    return Unauthorized("You don't have permission.");
+                }
+            }
+
             // Check if the device exists
             var device = await _deviceRepo.GetByMacAddressAsync(deviceMac);
             if (device == null)
@@ -55,7 +80,7 @@ namespace rdds.api.Controllers
                 }
 
                 // Fetch road data for the specific attempt and filters
-                var roadDataModels = await _roadDataRepo.GetAllByFilterAsync(attemptId.Value, startDate, endDate, minVelocity, maxVelocity);
+                var roadDataModels = await _roadDataRepo.GetAllByFilterAsync(attemptId.Value, startDate, endDate);
                 roadDataDtoList = roadDataModels.Select(rd => rd.ToRoadDataDto()).ToList();
             }
             else
@@ -63,7 +88,7 @@ namespace rdds.api.Controllers
                 foreach(var attempt in device.Attempts)
                 {
                     // Fetch road data without filtering by attempt, but for the device
-                    var roadDataModels = await _roadDataRepo.GetAllByFilterAsync(attempt.Id, startDate, endDate, minVelocity, maxVelocity);
+                    var roadDataModels = await _roadDataRepo.GetAllByFilterAsync(attempt.Id, startDate, endDate);
                     roadDataDtoList.AddRange(roadDataModels.Select(rd => rd.ToRoadDataDto()));
                 }
             }
@@ -73,6 +98,7 @@ namespace rdds.api.Controllers
 
         
         [ApiExplorerSettings(IgnoreApi = true)]
+        [Authorize]
         [HttpPost("{attemptId}")]
         public async Task<ActionResult> CreateAsync([FromRoute] int attemptId, [FromBody] IEnumerable<CreateRoadDataDto> roadDataDtos)
         {
@@ -106,6 +132,7 @@ namespace rdds.api.Controllers
         }
 
         [ApiExplorerSettings(IgnoreApi = true)]
+        [Authorize]
         [HttpDelete]
         public async Task<IActionResult> DeleteAllRoadData()
         {
