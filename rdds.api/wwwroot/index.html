@@ -1,10 +1,11 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>WebSocket Test</title>
+    <meta charset="UTF-8">
+    <title>Login Form</title>
 </head>
 <body>
-    <form action="https://deekyudev.my.id/rddsapi/auth/login" method="post">
+    <form id="loginForm" action="https://deekyudev.my.id/rddsapi/auth/login" method="post">
         <label for="username">Username:</label>
         <input type="text" id="username" name="username" required>
         <br><br>
@@ -13,7 +14,37 @@
         <br><br>
         <button type="submit">Login</button>
     </form>
+
     <script>
+        // Optionally, you can handle form submission via JavaScript
+        document.getElementById('loginForm').addEventListener('submit', async function(event) {
+            event.preventDefault(); // Prevent the form from submitting normally
+
+            const form = event.target;
+            const url = form.action;
+            const formData = new FormData(form);
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json' // Ensure JSON content type if necessary
+                    },
+                    body: JSON.stringify(Object.fromEntries(formData.entries()))
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log('Login successful:', data);
+            } catch (error) {
+                console.error('Login failed:', error);
+            }
+        });
+
+        // WebSocket setup
         let socket = new WebSocket("ws://localhost:5230/08:D1:F9:E1:A2:34/1");
 
         socket.onopen = function(e) {

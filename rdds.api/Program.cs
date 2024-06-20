@@ -145,14 +145,7 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 
-app.UseCors(options =>
-    {
-        options
-        .AllowAnyOrigin()
-        .AllowAnyHeader()
-        .AllowAnyMethod();
-    }
-);
+app.UseCors();
 
 app.UseAuthentication();
 app.UseAuthorization();
@@ -160,6 +153,7 @@ app.UseAuthorization();
 app.UseWebSockets();
 
 app.MapControllers();
+
 
 app.Run();
 
