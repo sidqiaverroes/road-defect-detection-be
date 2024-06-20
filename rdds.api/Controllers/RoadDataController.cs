@@ -48,7 +48,7 @@ namespace rdds.api.Controllers
             {
                 var authUser = await _accountRepo.GetUserByIdAsync(AppUser.Id);
                 var permissions = authUser.UserPermissions.Select(up => up.Permission.Id).ToList();
-                var isAuthorized = permissions.Any(p => p == 301);
+                var isAuthorized = permissions.Any(p => p == 401);
                 if(!isAuthorized){
                     return Unauthorized("You don't have permission.");
                 }

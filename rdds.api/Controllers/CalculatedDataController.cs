@@ -6,6 +6,9 @@ using rdds.api.Dtos.CalculatedData;
 using rdds.api.Interfaces;
 using rdds.api.Models;
 using rdds.api.Mappers;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using rdds.api.Extensions;
 
 namespace rdds.api.Controllers
 {
@@ -16,17 +19,40 @@ namespace rdds.api.Controllers
         private readonly ICalculatedDataRepository _calculatedDataRepository;
         private readonly IDeviceRepository _deviceRepo;
         private readonly IAttemptRepository _attemptRepo;
+        private readonly UserManager<AppUser> _userManager;
+        private readonly IAccountRepository _accountRepo;
 
-        public CalculatedDataController(ICalculatedDataRepository calculatedDataRepository, IDeviceRepository deviceRepo, IAttemptRepository attemptRepo)
+        public CalculatedDataController(ICalculatedDataRepository calculatedDataRepository, IDeviceRepository deviceRepo, IAttemptRepository attemptRepo, UserManager<AppUser> userManager, IAccountRepository accountRepo)
         {
             _calculatedDataRepository = calculatedDataRepository;
             _deviceRepo = deviceRepo;
             _attemptRepo = attemptRepo;
+            _userManager = userManager;
+            _accountRepo = accountRepo;
         }
 
+        [Authorize]
         [HttpGet("{deviceMac}")]
         public async Task<IActionResult> GetAllByFilter([FromRoute] string deviceMac, [FromQuery] int? attemptId = null, [FromQuery] string startDate = "", [FromQuery] string endDate = "", [FromQuery] float minVelocity = 0, [FromQuery] float maxVelocity = 0)
         {
+            var username = User.GetUsername();
+            if (username == null)
+            {
+                return BadRequest("You are not authorized.");
+            }
+            var AppUser = await _userManager.FindByNameAsync(username);
+
+            // Authorization of User Permission
+            if(User.IsInRole("User") && AppUser != null)
+            {
+                var authUser = await _accountRepo.GetUserByIdAsync(AppUser.Id);
+                var permissions = authUser.UserPermissions.Select(up => up.Permission.Id).ToList();
+                var isAuthorized = permissions.Any(p => p == 501);
+                if(!isAuthorized){
+                    return Unauthorized("You don't have permission.");
+                }
+            }
+
             // Check if the device exists
             var device = await _deviceRepo.GetByMacAddressAsync(deviceMac);
             if (device == null)
@@ -70,6 +96,7 @@ namespace rdds.api.Controllers
         }
 
         [ApiExplorerSettings(IgnoreApi = true)]
+        [Authorize]
         [HttpPost]
         public async Task<ActionResult> Create([FromBody] IEnumerable<CreateCalculatedDataDto> createCalculatedDataDtos, int attemptId)
         {
@@ -104,6 +131,7 @@ namespace rdds.api.Controllers
         }
 
         [ApiExplorerSettings(IgnoreApi = true)]
+        [Authorize]
         [HttpDelete]
         public async Task<ActionResult> DeleteAll()
         {
