@@ -127,6 +127,16 @@ builder.Services.AddSingleton(sp =>
 builder.Services.AddSingleton<MqttService>();
 builder.Services.AddHostedService<MqttService>();
 
+builder.Services.AddCors(options =>
+    {
+        options.AddDefaultPolicy(builder =>
+        {
+            builder.AllowAnyOrigin()
+                   .AllowAnyHeader()
+                   .AllowAnyMethod();
+        });
+    });
+
 var app = builder.Build();
 
 // Initialize database method
