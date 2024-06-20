@@ -2,11 +2,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using rdds.api.Data;
 using rdds.api.Dtos.RoadCategory;
+using rdds.api.Extensions;
 using rdds.api.Interfaces;
 using rdds.api.Mappers;
+using rdds.api.Models;
 
 namespace rdds.api.Controllers
 {
@@ -16,17 +19,39 @@ namespace rdds.api.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly IRoadCategoryRepository _roadCategoryRepo;
+        private readonly UserManager<AppUser> _userManager;
+        private readonly IAccountRepository _accountRepo;
 
-        public RoadCategoryController(ApplicationDbContext context, IRoadCategoryRepository roadCategoryRepo)
+        public RoadCategoryController(ApplicationDbContext context, IRoadCategoryRepository roadCategoryRepo, UserManager<AppUser> userManager, IAccountRepository accountRepo)
         {
             _context = context;
             _roadCategoryRepo = roadCategoryRepo;
+            _userManager = userManager;
+            _accountRepo = accountRepo;
         }
 
         [Authorize]
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
+            var username = User.GetUsername();
+            if (username == null)
+            {
+                return BadRequest("You are not authorized.");
+            }
+            var AppUser = await _userManager.FindByNameAsync(username);
+
+            // Authorization of User Permission
+            if(User.IsInRole("User") && AppUser != null)
+            {
+                var authUser = await _accountRepo.GetUserByIdAsync(AppUser.Id);
+                var permissions = authUser.UserPermissions.Select(up => up.Permission.Id).ToList();
+                var isAuthorized = permissions.Any(p => p == 601);
+                if(!isAuthorized){
+                    return Unauthorized("You don't have permission.");
+                }
+            }
+
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
@@ -41,6 +66,24 @@ namespace rdds.api.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById([FromRoute] int id)
         {
+            var username = User.GetUsername();
+            if (username == null)
+            {
+                return BadRequest("You are not authorized.");
+            }
+            var AppUser = await _userManager.FindByNameAsync(username);
+
+            // Authorization of User Permission
+            if(User.IsInRole("User") && AppUser != null)
+            {
+                var authUser = await _accountRepo.GetUserByIdAsync(AppUser.Id);
+                var permissions = authUser.UserPermissions.Select(up => up.Permission.Id).ToList();
+                var isAuthorized = permissions.Any(p => p == 602);
+                if(!isAuthorized){
+                    return Unauthorized("You don't have permission.");
+                }
+            }
+
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
@@ -58,6 +101,24 @@ namespace rdds.api.Controllers
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateRoadCategoryDto newRoadCategoryDto)
         {
+            var username = User.GetUsername();
+            if (username == null)
+            {
+                return BadRequest("You are not authorized.");
+            }
+            var AppUser = await _userManager.FindByNameAsync(username);
+
+            // Authorization of User Permission
+            if(User.IsInRole("User") && AppUser != null)
+            {
+                var authUser = await _accountRepo.GetUserByIdAsync(AppUser.Id);
+                var permissions = authUser.UserPermissions.Select(up => up.Permission.Id).ToList();
+                var isAuthorized = permissions.Any(p => p == 603);
+                if(!isAuthorized){
+                    return Unauthorized("You don't have permission.");
+                }
+            }
+
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
@@ -71,6 +132,24 @@ namespace rdds.api.Controllers
         [HttpPut("edit/{id}")]
         public async Task<IActionResult> Update([FromRoute] int id, [FromBody] UpdateRoadCategoryDto updateDto)
         {
+            var username = User.GetUsername();
+            if (username == null)
+            {
+                return BadRequest("You are not authorized.");
+            }
+            var AppUser = await _userManager.FindByNameAsync(username);
+
+            // Authorization of User Permission
+            if(User.IsInRole("User") && AppUser != null)
+            {
+                var authUser = await _accountRepo.GetUserByIdAsync(AppUser.Id);
+                var permissions = authUser.UserPermissions.Select(up => up.Permission.Id).ToList();
+                var isAuthorized = permissions.Any(p => p == 604);
+                if(!isAuthorized){
+                    return Unauthorized("You don't have permission.");
+                }
+            }
+            
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
             if (id <= 0)
@@ -91,6 +170,24 @@ namespace rdds.api.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete([FromRoute] int id)
         {
+            var username = User.GetUsername();
+            if (username == null)
+            {
+                return BadRequest("You are not authorized.");
+            }
+            var AppUser = await _userManager.FindByNameAsync(username);
+
+            // Authorization of User Permission
+            if(User.IsInRole("User") && AppUser != null)
+            {
+                var authUser = await _accountRepo.GetUserByIdAsync(AppUser.Id);
+                var permissions = authUser.UserPermissions.Select(up => up.Permission.Id).ToList();
+                var isAuthorized = permissions.Any(p => p == 605);
+                if(!isAuthorized){
+                    return Unauthorized("You don't have permission.");
+                }
+            }
+
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
             if (id <= 0)
