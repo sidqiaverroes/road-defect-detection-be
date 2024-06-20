@@ -96,16 +96,16 @@ namespace rdds.api.Data
                     await userManager.AddToRoleAsync(adminUser, "Admin");
 
                     // Assign all permissions to Admin
-                    var allPermissions = await context.Permissions.ToListAsync();
-                    foreach (var permission in allPermissions)
-                    {
-                        context.UserPermissions.Add(new UserPermission
-                        {
-                            UserId = adminUser.Id,
-                            PermissionId = permission.Id
-                        });
-                    }
-                    await context.SaveChangesAsync();
+                    // var allPermissions = await context.Permissions.ToListAsync();
+                    // foreach (var permission in allPermissions)
+                    // {
+                    //     context.UserPermissions.Add(new UserPermission
+                    //     {
+                    //         UserId = adminUser.Id,
+                    //         PermissionId = permission.Id
+                    //     });
+                    // }
+                    // await context.SaveChangesAsync();
                 }
             }
         }

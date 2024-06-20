@@ -24,11 +24,13 @@ namespace rdds.api.Controllers
         private readonly ApplicationDbContext _context;
         private readonly IDeviceRepository _deviceRepo;
         private readonly UserManager<AppUser> _userManager;
-        public DeviceController(ApplicationDbContext context, IDeviceRepository deviceRepo, UserManager<AppUser> userManager)
+        private readonly IAccountRepository _accountRepo;
+        public DeviceController(ApplicationDbContext context, IDeviceRepository deviceRepo, UserManager<AppUser> userManager, IAccountRepository accountRepo)
         {
             _deviceRepo = deviceRepo;
             _context = context;
             _userManager = userManager;
+            _accountRepo = accountRepo;
         }
 
         [Authorize]
@@ -42,6 +44,17 @@ namespace rdds.api.Controllers
             }
             var AppUser = await _userManager.FindByNameAsync(username);
 
+            // Authorization of User Permission
+            if(User.IsInRole("User") && AppUser != null)
+            {
+                var authUser = await _accountRepo.GetUserByIdAsync(AppUser.Id);
+                var permissions = authUser.UserPermissions.Select(up => up.Permission.Id).ToList();
+                var isAuthorized = permissions.Any(p => p == 201);
+                if(!isAuthorized){
+                    return Unauthorized("You don't have permission.");
+                }
+            }
+            
             var devices = await _deviceRepo.GetAllAsync(AppUser.Id);
             var deviceDto = devices.Select(s => s.ToDeviceDto());
 
@@ -52,6 +65,24 @@ namespace rdds.api.Controllers
         [HttpGet("{mac}")]
         public async Task<IActionResult> GetByMacAddress([FromRoute] string mac)
         {
+            var username = User.GetUsername();
+            if (username == null)
+            {
+                return BadRequest("You are not authorized.");
+            }
+            var AppUser = await _userManager.FindByNameAsync(username);
+
+            // Authorization of User Permission
+            if(User.IsInRole("User") && AppUser != null)
+            {
+                var authUser = await _accountRepo.GetUserByIdAsync(AppUser.Id);
+                var permissions = authUser.UserPermissions.Select(up => up.Permission.Id).ToList();
+                var isAuthorized = permissions.Any(p => p == 202);
+                if(!isAuthorized){
+                    return Unauthorized("You don't have permission.");
+                }
+            }
+            
             var device = await _deviceRepo.GetByMacAddressAsync(mac);
             
             if(device == null)
@@ -66,6 +97,24 @@ namespace rdds.api.Controllers
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateDeviceDto deviceDto)
         {
+            var username = User.GetUsername();
+            if (username == null)
+            {
+                return BadRequest("You are not authorized.");
+            }
+            var AppUser = await _userManager.FindByNameAsync(username);
+
+            // Authorization of User Permission
+            if(User.IsInRole("User") && AppUser != null)
+            {
+                var authUser = await _accountRepo.GetUserByIdAsync(AppUser.Id);
+                var permissions = authUser.UserPermissions.Select(up => up.Permission.Id).ToList();
+                var isAuthorized = permissions.Any(p => p == 203);
+                if(!isAuthorized){
+                    return Unauthorized("You don't have permission.");
+                }
+            }
+
             //Model Validation
             if(deviceDto == null)
             {
@@ -91,14 +140,6 @@ namespace rdds.api.Controllers
                 return BadRequest("Device with the corresponding mac address is already existed.");
             }
 
-            //Get user info
-            var username = User.GetUsername();
-            if (username == null)
-            {
-                return BadRequest("You are not authorized.");
-            }
-            var AppUser = await _userManager.FindByNameAsync(username);
-
             //Write function to db
             var deviceModel = deviceDto.ToDeviceFromCreateDto();
             deviceModel.AppUserId = AppUser.Id;
@@ -109,6 +150,24 @@ namespace rdds.api.Controllers
         [HttpPut("{mac}")]
         public async Task<IActionResult> Update([FromRoute] string mac, [FromBody] UpdateDeviceDto updateDeviceDto)
         {
+            var username = User.GetUsername();
+            if (username == null)
+            {
+                return BadRequest("You are not authorized.");
+            }
+            var AppUser = await _userManager.FindByNameAsync(username);
+
+            // Authorization of User Permission
+            if(User.IsInRole("User") && AppUser != null)
+            {
+                var authUser = await _accountRepo.GetUserByIdAsync(AppUser.Id);
+                var permissions = authUser.UserPermissions.Select(up => up.Permission.Id).ToList();
+                var isAuthorized = permissions.Any(p => p == 204);
+                if(!isAuthorized){
+                    return Unauthorized("You don't have permission.");
+                }
+            }
+
             var existingDevice = await _deviceRepo.GetByMacAddressAsync(mac);
             if (existingDevice == null)
             {
@@ -125,6 +184,24 @@ namespace rdds.api.Controllers
         [HttpDelete("{mac}")]
         public async Task<IActionResult> Delete([FromRoute] string mac)
         {
+            var username = User.GetUsername();
+            if (username == null)
+            {
+                return BadRequest("You are not authorized.");
+            }
+            var AppUser = await _userManager.FindByNameAsync(username);
+
+            // Authorization of User Permission
+            if(User.IsInRole("User") && AppUser != null)
+            {
+                var authUser = await _accountRepo.GetUserByIdAsync(AppUser.Id);
+                var permissions = authUser.UserPermissions.Select(up => up.Permission.Id).ToList();
+                var isAuthorized = permissions.Any(p => p == 205);
+                if(!isAuthorized){
+                    return Unauthorized("You don't have permission.");
+                }
+            }
+
             var existingDevice = await _deviceRepo.GetByMacAddressAsync(mac);
             if (existingDevice == null)
             {
