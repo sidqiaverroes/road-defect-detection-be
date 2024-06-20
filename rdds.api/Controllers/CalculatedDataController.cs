@@ -33,7 +33,7 @@ namespace rdds.api.Controllers
 
         [Authorize]
         [HttpGet("{deviceMac}")]
-        public async Task<IActionResult> GetAllByFilter([FromRoute] string deviceMac, [FromQuery] int? attemptId = null, [FromQuery] string startDate = "", [FromQuery] string endDate = "", [FromQuery] float minVelocity = 0, [FromQuery] float maxVelocity = 0)
+        public async Task<IActionResult> GetAllByFilter([FromRoute] string deviceMac, [FromQuery] int? attemptId = null, [FromQuery] string startDate = "", [FromQuery] string endDate = "")
         {
             var username = User.GetUsername();
             if (username == null)
@@ -79,7 +79,7 @@ namespace rdds.api.Controllers
                 }
 
                 // Fetch road data for the specific attempt and filters
-                var roadDataModels = await _calculatedDataRepository.GetAllByFilterAsync(attemptId.Value, startDate, endDate, minVelocity, maxVelocity);
+                var roadDataModels = await _calculatedDataRepository.GetAllByFilterAsync(attemptId.Value, startDate, endDate);
                 calculatedDataDtoList = roadDataModels.Select(rd => rd.ToCalculatedDataDto()).ToList();
             }
             else
@@ -87,7 +87,7 @@ namespace rdds.api.Controllers
                 foreach(var attempt in device.Attempts)
                 {
                     // Fetch road data without filtering by attempt, but for the device
-                    var roadDataModels = await _calculatedDataRepository.GetAllByFilterAsync(attempt.Id, startDate, endDate, minVelocity, maxVelocity);
+                    var roadDataModels = await _calculatedDataRepository.GetAllByFilterAsync(attempt.Id, startDate, endDate);
                     calculatedDataDtoList.AddRange(roadDataModels.Select(rd => rd.ToCalculatedDataDto()));
                 }
             }

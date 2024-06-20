@@ -90,7 +90,7 @@ namespace rdds.api.Repositories
             }
         }
 
-        public async Task<List<CalculatedData>> GetAllByFilterAsync(int? attemptId, string startDate, string endDate, float minVelocity, float maxVelocity)
+        public async Task<List<CalculatedData>> GetAllByFilterAsync(int? attemptId, string startDate, string endDate)
         {
             DateTime? startDateTime = null;
             DateTime? endDateTime = null;
@@ -113,16 +113,6 @@ namespace rdds.api.Repositories
             var query = _context.CalculatedDatas.AsQueryable();
 
             query = query.Where(cd => cd.AttemptId == attemptId);
-
-            if (minVelocity > 0)
-            {
-                query = query.Where(cd => cd.Velocity >= minVelocity);
-            }
-
-            if (maxVelocity > 0)
-            {
-                query = query.Where(cd => cd.Velocity <= maxVelocity);
-            }
 
             if (startDateTime.HasValue)
             {

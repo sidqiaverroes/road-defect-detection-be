@@ -179,6 +179,49 @@ namespace rdds.api.Controllers
             return Ok(attempt.ToAttemptDto());
         }
 
+        [Authorize]
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete([FromRoute] int id)
+        {
+            var username = User.GetUsername();
+            if (username == null)
+            {
+                return BadRequest("You are not authorized.");
+            }
+            var appUser = await _userManager.FindByNameAsync(username);
+
+            // Authorization of User Permission
+            if (User.IsInRole("User") && appUser != null)
+            {
+                var authUser = await _accountRepo.GetUserByIdAsync(appUser.Id);
+                var permissions = authUser.UserPermissions.Select(up => up.Permission.Id).ToList();
+                var isAuthorized = permissions.Any(p => p == 305);
+                if (!isAuthorized)
+                {
+                    return Unauthorized("You don't have permission.");
+                }
+            }
+
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+            if (id <= 0)
+                return BadRequest("Invalid attempt id");
+
+            var attempt = await _attemptRepo.GetByIdAsync(id);
+            if (attempt == null)
+            {
+                return NotFound("Attempt not found");
+            }
+
+            var result = await _attemptRepo.DeleteAsync(id);
+            if (result == null)
+            {
+                return StatusCode(500, "A problem happened while handling your request.");
+            }
+
+            return Ok("Attempt deleted successfully");
+        }
+
         [ApiExplorerSettings(IgnoreApi = true)]
         [Authorize]
         [HttpPut("finish/{id}")]

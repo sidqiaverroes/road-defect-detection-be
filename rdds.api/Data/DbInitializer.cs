@@ -55,6 +55,7 @@ namespace rdds.api.Data
                     new Permission { Id = 302, Name = "Get Attempt By Id" },
                     new Permission { Id = 303, Name = "Create Attempt" },
                     new Permission { Id = 304, Name = "Update Attempt" },
+                    new Permission { Id = 305, Name = "Delete Attempt" },
                     // Road Data
                     new Permission { Id = 401, Name = "Get All Road Data By Device Id" },
                     // Calculated Data
