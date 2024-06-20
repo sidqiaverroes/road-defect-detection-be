@@ -127,15 +127,6 @@ builder.Services.AddSingleton(sp =>
 builder.Services.AddSingleton<MqttService>();
 builder.Services.AddHostedService<MqttService>();
 
-builder.Services.AddCors(options =>
-    {
-        options.AddDefaultPolicy(builder =>
-        {
-            builder.AllowAnyOrigin()
-                   .AllowAnyHeader()
-                   .AllowAnyMethod();
-        });
-    });
 
 var app = builder.Build();
 
@@ -148,14 +139,20 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+app.UseCors(options =>
+    {
+        options
+        .AllowAnyOrigin()
+        .AllowAnyHeader()
+        .AllowAnyMethod();
+    }
+);
 
 app.UseHttpsRedirection();
 
 app.UseStaticFiles();
 
 app.UseRouting();
-
-app.UseCors();
 
 app.UseAuthentication();
 app.UseAuthorization();
