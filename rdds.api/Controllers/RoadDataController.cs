@@ -14,7 +14,6 @@ using rdds.api.Models;
 
 namespace rdds.api.Controllers
 {
-    [EnableCors]
     [Route("rddsapi/roaddata")]
     [ApiController]
     public class RoadDataController : ControllerBase

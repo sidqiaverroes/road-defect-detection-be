@@ -15,7 +15,6 @@ using rdds.api.Models;
 
 namespace rdds.api.Controllers
 {
-    [EnableCors]
     [Route("rddsapi/attempt")]
     [ApiController]
     public class AttemptController: ControllerBase

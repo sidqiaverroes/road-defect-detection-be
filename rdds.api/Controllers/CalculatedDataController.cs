@@ -13,7 +13,6 @@ using Microsoft.AspNetCore.Cors;
 
 namespace rdds.api.Controllers
 {
-    [EnableCors]
     [Route("api/[controller]")]
     [ApiController]
     public class CalculatedDataController : ControllerBase
