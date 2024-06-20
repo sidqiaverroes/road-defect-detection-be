@@ -4,6 +4,15 @@
     <title>WebSocket Test</title>
 </head>
 <body>
+    <form action="https://deekyudev.my.id/rddsapi/auth/login" method="post">
+        <label for="username">Username:</label>
+        <input type="text" id="username" name="username" required>
+        <br><br>
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" required>
+        <br><br>
+        <button type="submit">Login</button>
+    </form>
     <script>
         let socket = new WebSocket("ws://localhost:5230/08:D1:F9:E1:A2:34/1");
 

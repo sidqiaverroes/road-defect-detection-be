@@ -139,6 +139,12 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseHttpsRedirection();
+
+app.UseStaticFiles();
+app.UseRouting();
+
 app.UseCors(options =>
     {
         options
@@ -147,12 +153,6 @@ app.UseCors(options =>
         .AllowAnyMethod();
     }
 );
-
-app.UseHttpsRedirection();
-
-app.UseStaticFiles();
-
-app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();

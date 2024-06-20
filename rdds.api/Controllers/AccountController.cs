@@ -16,7 +16,6 @@ using rdds.api.Models;
 
 namespace rdds.api.Controllers
 {
-    [EnableCors]
     [Route("rddsapi/auth")]
     [ApiController]
     public class AccountController : ControllerBase
@@ -33,6 +32,7 @@ namespace rdds.api.Controllers
             _accountRepo = accountRepo;
         }
         
+        [EnableCors]
         [Authorize("Admin")]
         [HttpGet]
         public async Task<IActionResult> GetAll()
@@ -48,6 +48,7 @@ namespace rdds.api.Controllers
             return Ok(usersWithRole);
         }
 
+        [EnableCors]
         [Authorize("Admin")]
         [HttpGet("get-admin-profile")]
         public async Task<IActionResult> GetAdminProfile()
@@ -64,6 +65,7 @@ namespace rdds.api.Controllers
             return Ok(adminProfile);
         }
 
+        [EnableCors]
         [Authorize]
         [HttpGet("{userId}")]
         public async Task<IActionResult> GetUserById(string userId)
@@ -78,6 +80,7 @@ namespace rdds.api.Controllers
             return Ok(user.ToUserDto());
         }
 
+        [EnableCors]
         [Authorize("Admin")]
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto registerDto)
@@ -123,9 +126,9 @@ namespace rdds.api.Controllers
             {
                 return StatusCode(500, createdUser.Errors);
             }
-}
+        }
 
-
+        [EnableCors]
         [HttpPost("login")]
         public async Task<IActionResult> Login(LoginDto loginDto)
         {
@@ -150,6 +153,7 @@ namespace rdds.api.Controllers
             );
         }
 
+        [EnableCors]
         [Authorize("Admin")]
         [HttpPut("update-admin")]
         public async Task<IActionResult> UpdateAdmin([FromBody] UpdateAdminDto model)
@@ -188,6 +192,7 @@ namespace rdds.api.Controllers
             return Ok("Admin profile updated successfully");
         }
 
+        [EnableCors]
         [Authorize("Admin")]
         [HttpPut("update-user-details/{userId}")]
         public async Task<IActionResult> UpdateUserDetails(string userId, [FromBody] UpdateUserDetailsDto model)
@@ -243,6 +248,7 @@ namespace rdds.api.Controllers
             return Ok("User details updated successfully");
         }
 
+        [EnableCors]
         [Authorize("Admin")]
         [HttpDelete("delete/{userId}")]
         public async Task<IActionResult> DeleteUser(string userId)
