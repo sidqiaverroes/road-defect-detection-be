@@ -49,6 +49,18 @@ public class Program
             throw new Exception($"Failed to connect: {connectResult.ReasonString}");
         }
 
+        var topic = "rdds/device/08:D1:F9:E1:A2:34";
+
+        var startMessage = new MQTT5PublishMessage
+        {
+            Topic = topic,
+            Payload = Encoding.UTF8.GetBytes("Start"), // Serialize JSON to UTF-8 bytes
+            QoS = QualityOfService.AtLeastOnceDelivery,
+        };
+
+        var startResult = await client.PublishAsync(startMessage).ConfigureAwait(false);
+        Console.WriteLine($"Published Start message to topic {topic}: {startResult.QoS1ReasonCode}");
+
         var message_number = 0;
         while (true)
         {
@@ -59,7 +71,7 @@ public class Program
 
             for (int i = 0; i < 5; i++)
             {
-                var timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss.ff");
+                var timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss.fff");
                 var latitude = random.NextDouble() * 180 - 90;   // Example random latitude within [-90, 90]
                 var longitude = random.NextDouble() * 360 - 180; // Example random longitude within [-180, 180]
                 var velocity = random.NextDouble() * 100;        // Example random velocity within [0, 100]
@@ -85,7 +97,6 @@ public class Program
             var json = JsonSerializer.Serialize(sensorDataList);
 
             // Publish JSON array to MQTT topic
-            var topic = "rdds/device/08:D1:F9:E1:A2:34/attempt/1";
             var message = new MQTT5PublishMessage
             {
                 Topic = topic,
@@ -96,7 +107,18 @@ public class Program
             var resultPublish = await client.PublishAsync(message).ConfigureAwait(false);
             Console.WriteLine($"Published {sensorDataList.Count} messages to topic {topic}: {resultPublish.QoS1ReasonCode}");
 
-            if(message_number == 5000){
+            if(message_number == 9){
+                // Serialize and publish the "End" message
+                var endMessage = new MQTT5PublishMessage
+                {
+                    Topic = topic,
+                    Payload = Encoding.UTF8.GetBytes("End"),
+                    QoS = QualityOfService.AtLeastOnceDelivery,
+                };
+
+                var endResult = await client.PublishAsync(endMessage).ConfigureAwait(false);
+                Console.WriteLine($"Published End message to topic {endMessage.Topic}: {endResult.QoS1ReasonCode}");
+
                 Console.WriteLine("Disconnecting gracefully...");
                 await client.DisconnectAsync().ConfigureAwait(false);
                 return;

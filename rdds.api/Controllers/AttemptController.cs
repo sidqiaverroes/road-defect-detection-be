@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using rdds.api.Data;
@@ -14,6 +15,7 @@ using rdds.api.Models;
 
 namespace rdds.api.Controllers
 {
+    [EnableCors]
     [Route("rddsapi/attempt")]
     [ApiController]
     public class AttemptController: ControllerBase

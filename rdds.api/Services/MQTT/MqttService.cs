@@ -9,6 +9,7 @@ using HiveMQtt.Client;
 using HiveMQtt.Client.Options;
 using Microsoft.Extensions.DependencyInjection;
 using rdds.api.Data;
+using rdds.api.Dtos.Attempt;
 using rdds.api.Dtos.RoadData;
 using rdds.api.Interfaces;
 using rdds.api.Mappers;
@@ -41,15 +42,17 @@ namespace rdds.api.Services.MQTT
                 var payload = args.PublishMessage.PayloadAsString;
                 var topicParts = topic.Split('/');
                 var deviceId = topicParts[2];  // Extract the device ID
-                var attemptId = topicParts[4];  // Extract the attempt ID
-                var key = $"{deviceId}/{attemptId}";
+                var key = deviceId;
+                int attemptId = 0;
                 // _logger.LogInformation($"Topic: {topic}, Received payload: {payload}");
 
                 //Validate the topic format
-                if (topicParts.Length == 5 && topicParts[0] == "rdds" && topicParts[1] == "device" && topicParts[3] == "attempt")
+                if (topicParts.Length == 3 && topicParts[0] == "rdds" && topicParts[1] == "device")
                 {
-                    // Add payload to the buffer
-                    // Payload format: [{ timestamp: "YY-MM-DD hh:mm:ss.ms", latitude: xx.xxxxxx, longitude: xx.xxxxxx, velocity: xx.xx, roll: xx.xx, pitch: xx.xx, euclidean: xx,xx}]
+                    bool shouldProcessStart = false;
+                    bool shouldProcessEnd = false;
+                    List<string> payloadsToProcess = null;
+
                     lock (_payloadBuffer)
                     {
                         if (!_payloadBuffer.ContainsKey(key))
@@ -57,26 +60,124 @@ namespace rdds.api.Services.MQTT
                             _payloadBuffer[key] = new List<string>();
                         }
 
-                        // Enqueue the new payload
+                        // Add payload to the buffer
                         _payloadBuffer[key].Add(payload);
 
-                        // If buffer exceeds the max count, dequeue the oldest payload
-                        if (_payloadBuffer[key].Count == MaxBufferCount)
+                        // Check for "Start" or "End" payload
+                        if (payload == "Start")
                         {
-                            var payloadsToProcess = _payloadBuffer[key].ToList();
-                            _payloadBuffer[key].Clear();
-
-                            // Process the buffered payloads
-                            Task.Run(async () => await ProcessPayloadsAsync(payloadsToProcess, int.Parse(attemptId), deviceId));
+                            shouldProcessStart = true;
+                        }
+                        else if (payload == "End")
+                        {
+                            shouldProcessEnd = true;
+                        }
+                        else if (_payloadBuffer[key].Count == MaxBufferCount + 1) // Ensure we have enough data for at least 3 batches
+                        {
+                            payloadsToProcess = ExtractRegularPayloads(key);
                         }
                     }
-                    // await SendToWebSocketTopicAsync(deviceId, attemptId, payload);
+
+                    if (shouldProcessStart)
+                    {
+                        try
+                        {
+                            attemptId = await ProcessStartAsync(deviceId);
+                            _logger.LogInformation($"Processed 'Start' message for device {deviceId}, new attemptId: {attemptId}");
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError($"Error processing 'Start' message for device {deviceId}: {ex.Message}");
+                        }
+                    }
+
+                    if (shouldProcessEnd)
+                    {
+                        _logger.LogInformation($"Received 'End' message for device {deviceId}");
+                    }
+
+                    if (payloadsToProcess != null)
+                    {
+                        try
+                        {
+                            await ProcessPayloadsAsync(payloadsToProcess, attemptId, deviceId);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError($"Error processing regular payloads for device {deviceId}: {ex.Message}");
+                        }
+                    }
                 }
                 else
                 {
                     _logger.LogWarning($"Received payload with unmatched topic format: {topic}");
                 }
             };
+        }
+
+        private async Task<int> ProcessStartAsync(string deviceMac)
+        {
+            using (var scope = _scopeFactory.CreateScope())
+            {
+                //Dependencies
+                var _attemptRepo = scope.ServiceProvider.GetRequiredService<IAttemptRepository>();
+                var _deviceRepo = scope.ServiceProvider.GetRequiredService<IDeviceRepository>();
+
+                //is the device registered? continue : throw
+                var existedDeviceMac = await _deviceRepo.IsExistedAsync(deviceMac);
+
+                if(existedDeviceMac == null)
+                {
+                    throw new Exception("Device is not Registered");
+                }
+
+                var attemptDto = new CreateAttemptDto
+                {
+                    Title = "title",
+                    Description = "desc",
+                };
+
+                var attemptModel = attemptDto.ToAttemptFromCreate(deviceMac);
+                
+                var createdAttempt = await _attemptRepo.CreateAsync(attemptModel);
+
+                if(createdAttempt == null)
+                {
+                    throw new Exception("There is still ongoing attempt");
+                }
+
+                int attemptId = createdAttempt.Id;
+
+                return attemptId;
+            }
+        }
+
+        private async Task ProcessEndAsync(string deviceMac)
+        {
+            using (var scope = _scopeFactory.CreateScope())
+            {
+                //Dependencies
+                var _attemptRepo = scope.ServiceProvider.GetRequiredService<IAttemptRepository>();
+                var _deviceRepo = scope.ServiceProvider.GetRequiredService<IDeviceRepository>();
+
+                
+            }
+        }
+
+        private List<string> ExtractRegularPayloads(string key)
+        {
+            var payloadsToProcess = new List<string>();
+
+            // Extract batches of regular payloads (excluding "Start" and "End")
+            var allPayloads = _payloadBuffer[key];
+            var startIndex = 1;
+            var batch = allPayloads.Skip(startIndex).Take(MaxBufferCount).ToList();
+            payloadsToProcess.AddRange(batch);
+
+            // Remove processed payloads from the buffer
+            _payloadBuffer[key].RemoveRange(startIndex, MaxBufferCount);
+
+            return payloadsToProcess;
         }
 
         private async Task ProcessPayloadsAsync(List<string> payloads, int attemptId, string deviceId)
@@ -122,11 +223,11 @@ namespace rdds.api.Services.MQTT
                     int samplingFrequency = 50;
                     InternationalRoughnessIndex IRIData = CalculateIRI(roadDataList, samplingFrequency);
 
-                    // Save road data
-                    await _roadDataRepo.CreateFromMqttAsync(sensorDataList, attemptId);
+                    // // Save road data
+                    // await _roadDataRepo.CreateFromMqttAsync(sensorDataList, attemptId);
 
-                    // Save calculated data
-                    await _calculatedDataRepo.CreateFromMqttAsync(sensorDataList, IRIData, attemptId);
+                    // // Save calculated data
+                    // await _calculatedDataRepo.CreateFromMqttAsync(sensorDataList, IRIData, attemptId);
 
                     //Generate json websocket payload
                     var payloadList = new List<WebsocketPayload>();

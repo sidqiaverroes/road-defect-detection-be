@@ -9,9 +9,11 @@ using rdds.api.Mappers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using rdds.api.Extensions;
+using Microsoft.AspNetCore.Cors;
 
 namespace rdds.api.Controllers
 {
+    [EnableCors]
     [Route("api/[controller]")]
     [ApiController]
     public class CalculatedDataController : ControllerBase

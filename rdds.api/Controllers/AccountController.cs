@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -15,6 +16,7 @@ using rdds.api.Models;
 
 namespace rdds.api.Controllers
 {
+    [EnableCors]
     [Route("rddsapi/auth")]
     [ApiController]
     public class AccountController : ControllerBase
@@ -30,7 +32,7 @@ namespace rdds.api.Controllers
             _signinManager = signInManager;
             _accountRepo = accountRepo;
         }
-
+        
         [Authorize("Admin")]
         [HttpGet]
         public async Task<IActionResult> GetAll()

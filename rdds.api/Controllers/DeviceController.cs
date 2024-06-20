@@ -17,6 +17,7 @@ using rdds.api.Models;
 
 namespace rdds.api.Controllers
 {
+    [EnableCors]
     [Route("rddsapi/device")]
     [ApiController]
     public class DeviceController: ControllerBase
