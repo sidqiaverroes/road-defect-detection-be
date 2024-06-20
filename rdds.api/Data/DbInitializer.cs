@@ -44,17 +44,22 @@ namespace rdds.api.Data
                     new Permission { Id = 106, Name = "Update Admin" },
                     new Permission { Id = 107, Name = "Update User" },
                     new Permission { Id = 108, Name = "Delete User" },
+                    // Device
                     new Permission { Id = 201, Name = "Get All Devices" },
                     new Permission { Id = 202, Name = "Get Device By Id" },
                     new Permission { Id = 203, Name = "Create Device" },
                     new Permission { Id = 204, Name = "Update Device" },
                     new Permission { Id = 205, Name = "Delete Device" },
+                    // Attempt
                     new Permission { Id = 301, Name = "Get All Attempts" },
                     new Permission { Id = 302, Name = "Get Attempt By Id" },
                     new Permission { Id = 303, Name = "Create Attempt" },
                     new Permission { Id = 304, Name = "Update Attempt" },
+                    // Road Data
                     new Permission { Id = 401, Name = "Get All Road Data By Device Id" },
+                    // Calculated Data
                     new Permission { Id = 501, Name = "Get All Calculated Data By Device Id" },
+                    // Road Category
                     new Permission { Id = 601, Name = "Get All Road Category" },
                     new Permission { Id = 602, Name = "Get Road Category By Id" },
                     new Permission { Id = 603, Name = "Create Road Category" },

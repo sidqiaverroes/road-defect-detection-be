@@ -92,6 +92,7 @@ namespace rdds.api.Repositories
 
             existingAttempt.Title = attemptModel.Title;
             existingAttempt.Description = attemptModel.Description;
+            existingAttempt.RoadCategoryId = attemptModel.RoadCategoryId;
             existingAttempt.LastModified = DateTime.Now;
 
             await _context.SaveChangesAsync();
