@@ -30,7 +30,8 @@ namespace rdds.api.Mappers
             {
                 Title = attemptDto.Title,
                 Description = attemptDto.Description,
-                DeviceId = deviceMac
+                DeviceId = deviceMac,
+                CreatedOn = DateTime.Now
             };
         }
 

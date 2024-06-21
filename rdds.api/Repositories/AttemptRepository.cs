@@ -17,19 +17,35 @@ namespace rdds.api.Repositories
         {
             _context = context;
         }
-        public async Task<Attempt?> CreateAsync(Attempt attemptModel)
+        public async Task<Attempt?> CreateAsync(Attempt attemptModel, string deviceMac)
         {
-            var lastAttempt = await _context.Attempts.OrderByDescending(a => a.CreatedOn).FirstOrDefaultAsync();
-
-            if (lastAttempt != null && !lastAttempt.IsFinished)
+            using (var transaction = await _context.Database.BeginTransactionAsync())
             {
-                return null;
-            }
+                try
+                {
+                    var lastAttempt = await GetLastAttempt(deviceMac);
 
-            await _context.Attempts.AddAsync(attemptModel);
-            await _context.SaveChangesAsync();
-            return attemptModel;
+                    // If there is no last attempt or the last attempt is finished, create a new attempt
+                    if (lastAttempt == null || lastAttempt.IsFinished)
+                    {
+                        await _context.Attempts.AddAsync(attemptModel);
+                        await _context.SaveChangesAsync();
+                        await transaction.CommitAsync();
+                        return attemptModel;
+                    }
+
+                    // If the last attempt is not finished, return null
+                    await transaction.RollbackAsync();
+                    return null;
+                }
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync();
+                    throw new Exception("An error occurred while creating a new attempt", ex);
+                }
+            }
         }
+
 
         public async Task<Attempt?> DeleteAsync(int id)
         {
@@ -107,6 +123,14 @@ namespace rdds.api.Repositories
                 .AnyAsync(a => a.Id == attemptId && a.Device.MacAddress == deviceMac);
 
             return isRelated;
+        }
+
+        public async Task<Attempt?> GetLastAttempt(string deviceMac)
+        {
+            return await _context.Attempts
+            .Where(a => a.DeviceId == deviceMac)
+            .OrderByDescending(a => a.Id)
+            .FirstOrDefaultAsync();
         }
     }
 }

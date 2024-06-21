@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using rdds.api.Data;
@@ -11,9 +12,11 @@ using rdds.api.Data;
 namespace rdds.api.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240620191021_new")]
+    partial class @new
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -50,13 +53,13 @@ namespace rdds.api.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "21fdfc15-c8df-4726-95e3-9df518808651",
+                            Id = "79fa9750-b46c-4f99-bc06-5b1e48973c99",
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         },
                         new
                         {
-                            Id = "c182e922-0db7-4612-a32b-33117660b9a1",
+                            Id = "871a5fa3-31be-4cfe-910c-3eaa73b115f8",
                             Name = "User",
                             NormalizedName = "USER"
                         });
@@ -247,7 +250,6 @@ namespace rdds.api.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("DeviceId")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<DateTime?>("FinishedOn")
@@ -348,6 +350,7 @@ namespace rdds.api.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Name")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<float>("TotalLength")
@@ -460,8 +463,7 @@ namespace rdds.api.Migrations
                     b.HasOne("rdds.api.Models.Device", "Device")
                         .WithMany("Attempts")
                         .HasForeignKey("DeviceId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("rdds.api.Models.RoadCategory", "RoadCategory")
                         .WithMany("Attempts")

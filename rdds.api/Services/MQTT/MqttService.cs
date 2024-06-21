@@ -22,11 +22,13 @@ namespace rdds.api.Services.MQTT
     {
         private readonly ILogger<MqttService> _logger;
         private readonly HiveMQClient _mqttClient;
-        private readonly Dictionary<string, List<WebSocket>> _topicToWebSocketsMap;
         private readonly IServiceScopeFactory _scopeFactory;
-        private readonly Dictionary<string, List<string>> _payloadBuffer = new();
-        private const int MaxBufferCount = 3;
         private readonly CalculationService _calculationService;
+        private readonly Dictionary<string, List<WebSocket>> _topicToWebSocketsMap;
+        private readonly Dictionary<string, List<string>> _payloadBuffer = new Dictionary<string, List<string>>();
+        private static readonly SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
+        private const int MaxBufferCount = 3;
+        private readonly object _attemptLock = new();
 
         public MqttService(ILogger<MqttService> logger, HiveMQClient mqttClient, IServiceScopeFactory scopeFactory, CalculationService calculationService)
         {
@@ -43,69 +45,30 @@ namespace rdds.api.Services.MQTT
                 var topicParts = topic.Split('/');
                 var deviceId = topicParts[2];  // Extract the device ID
                 var key = deviceId;
-                int attemptId = 0;
-                // _logger.LogInformation($"Topic: {topic}, Received payload: {payload}");
 
-                //Validate the topic format
+                // Validate the topic format
                 if (topicParts.Length == 3 && topicParts[0] == "rdds" && topicParts[1] == "device")
                 {
-                    bool shouldProcessStart = false;
-                    bool shouldProcessEnd = false;
-                    List<string> payloadsToProcess = null;
-
-                    lock (_payloadBuffer)
+                    // Check if the device is registered
+                    var deviceMac = await CheckDeviceRegisteredAsync(deviceId);
+                    if (deviceMac == null)
                     {
-                        if (!_payloadBuffer.ContainsKey(key))
-                        {
-                            _payloadBuffer[key] = new List<string>();
-                        }
-
-                        // Add payload to the buffer
-                        _payloadBuffer[key].Add(payload);
-
-                        // Check for "Start" or "End" payload
-                        if (payload == "Start")
-                        {
-                            shouldProcessStart = true;
-                        }
-                        else if (payload == "End")
-                        {
-                            shouldProcessEnd = true;
-                        }
-                        else if (_payloadBuffer[key].Count == MaxBufferCount + 1) // Ensure we have enough data for at least 3 batches
-                        {
-                            payloadsToProcess = ExtractRegularPayloads(key);
-                        }
+                        _logger.LogWarning($"Device ID {deviceId} is not registered.");
+                        return;
                     }
 
-                    if (shouldProcessStart)
+                    // Handle "Start", regular payloads, and "End"
+                    if (payload == "Start")
                     {
-                        try
-                        {
-                            attemptId = await ProcessStartAsync(deviceId);
-                            _logger.LogInformation($"Processed 'Start' message for device {deviceId}, new attemptId: {attemptId}");
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.LogError($"Error processing 'Start' message for device {deviceId}: {ex.Message}");
-                        }
+                        await HandleStartMessage(deviceMac);
                     }
-
-                    if (shouldProcessEnd)
+                    else if (payload == "End")
                     {
-                        _logger.LogInformation($"Received 'End' message for device {deviceId}");
+                        await HandleEndMessage(deviceMac);
                     }
-
-                    if (payloadsToProcess != null)
+                    else
                     {
-                        try
-                        {
-                            await ProcessPayloadsAsync(payloadsToProcess, attemptId, deviceId);
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.LogError($"Error processing regular payloads for device {deviceId}: {ex.Message}");
-                        }
+                        await HandleRegularPayload(key, payload, deviceMac);
                     }
                 }
                 else
@@ -115,73 +78,123 @@ namespace rdds.api.Services.MQTT
             };
         }
 
-        private async Task<int> ProcessStartAsync(string deviceMac)
+        private async Task<string?> CheckDeviceRegisteredAsync(string deviceId)
         {
             using (var scope = _scopeFactory.CreateScope())
             {
-                //Dependencies
-                var _attemptRepo = scope.ServiceProvider.GetRequiredService<IAttemptRepository>();
-                var _deviceRepo = scope.ServiceProvider.GetRequiredService<IDeviceRepository>();
-
-                //is the device registered? continue : throw
-                var existedDeviceMac = await _deviceRepo.IsExistedAsync(deviceMac);
-
-                if(existedDeviceMac == null)
-                {
-                    throw new Exception("Device is not Registered");
-                }
-
-                var attemptDto = new CreateAttemptDto
-                {
-                    Title = "title",
-                    Description = "desc",
-                };
-
-                var attemptModel = attemptDto.ToAttemptFromCreate(deviceMac);
-                
-                var createdAttempt = await _attemptRepo.CreateAsync(attemptModel);
-
-                if(createdAttempt == null)
-                {
-                    throw new Exception("There is still ongoing attempt");
-                }
-
-                int attemptId = createdAttempt.Id;
-
-                return attemptId;
+                var deviceRepo = scope.ServiceProvider.GetRequiredService<IDeviceRepository>();
+                return await deviceRepo.IsExistedAsync(deviceId);
             }
         }
 
-        private async Task ProcessEndAsync(string deviceMac)
+        private async Task HandleStartMessage(string deviceMac)
+        {
+            var uniqueId = Guid.NewGuid();
+            _logger.LogInformation($"[{DateTime.Now:O}] [{uniqueId}] Handling start message for device {deviceMac}");
+
+            await _semaphore.WaitAsync();
+
+            try
+            {
+                _logger.LogInformation($"[{DateTime.Now:O}] [{uniqueId}] Entered lock for device {deviceMac}");
+            
+                using (var scope = _scopeFactory.CreateScope())
+                {
+                    var attemptRepo = scope.ServiceProvider.GetRequiredService<IAttemptRepository>();
+
+                    // Check if the last attempt is finished
+                    var lastAttempt = await attemptRepo.GetLastAttempt(deviceMac);
+                    if (lastAttempt != null && !lastAttempt.IsFinished)
+                    {
+                        _logger.LogWarning($"[{DateTime.Now:O}] [{uniqueId}] Last attempt for device {deviceMac} is not finished yet.");
+                        return;
+                    }
+
+                    // Create a new attempt
+                    var attemptDto = new CreateAttemptDto
+                    {
+                        Title = "title",
+                        Description = "desc",
+                    };
+                    var attemptModel = attemptDto.ToAttemptFromCreate(deviceMac);
+                    var newAttempt = await attemptRepo.CreateAsync(attemptModel, deviceMac);
+                    if (newAttempt == null)
+                    {
+                        _logger.LogWarning($"[{DateTime.Now:O}] [{uniqueId}] Failed to create a new attempt for device {deviceMac}");
+                    }
+                    else
+                    {
+                        _logger.LogInformation($"[{DateTime.Now:O}] [{uniqueId}] Created new attempt for device {deviceMac}");
+                    }
+                }
+            }
+            finally
+            {
+                _semaphore.Release();
+                _logger.LogInformation($"[{DateTime.Now:O}] [{uniqueId}] Exiting lock for device {deviceMac}");
+            }
+        }
+
+
+        private async Task HandleEndMessage(string deviceMac)
         {
             using (var scope = _scopeFactory.CreateScope())
             {
-                //Dependencies
-                var _attemptRepo = scope.ServiceProvider.GetRequiredService<IAttemptRepository>();
-                var _deviceRepo = scope.ServiceProvider.GetRequiredService<IDeviceRepository>();
-
-                
+                var attemptRepo = scope.ServiceProvider.GetRequiredService<IAttemptRepository>();
+                var lastAttempt = await attemptRepo.GetLastAttempt(deviceMac);
+                if (lastAttempt == null)
+                {
+                    _logger.LogWarning($"No ongoing attempt found for device {deviceMac}");
+                }
+                else
+                {
+                    await attemptRepo.FinishAsync(lastAttempt.Id);
+                    _logger.LogInformation($"Finished attempt {lastAttempt.Id} for device {deviceMac}");
+                }
             }
         }
 
-        private List<string> ExtractRegularPayloads(string key)
+        private async Task HandleRegularPayload(string key, string payload, string deviceId)
         {
-            var payloadsToProcess = new List<string>();
+            using (var scope = _scopeFactory.CreateScope())
+            {
+                var attemptRepo = scope.ServiceProvider.GetRequiredService<IAttemptRepository>();
+                var lastAttempt = await attemptRepo.GetLastAttempt(deviceId);
 
-            // Extract batches of regular payloads (excluding "Start" and "End")
-            var allPayloads = _payloadBuffer[key];
-            var startIndex = 1;
-            var batch = allPayloads.Skip(startIndex).Take(MaxBufferCount).ToList();
-            payloadsToProcess.AddRange(batch);
+                if(lastAttempt == null)
+                {
+                    throw new Exception("no last attempt");
+                }
 
-            // Remove processed payloads from the buffer
-            _payloadBuffer[key].RemoveRange(startIndex, MaxBufferCount);
+                var attemptId = lastAttempt.Id;
 
-            return payloadsToProcess;
+                // Add payload to the buffer
+                lock (_payloadBuffer)
+                {
+                    if (!_payloadBuffer.ContainsKey(key))
+                    {
+                        _payloadBuffer[key] = new List<string>();
+                    }
+                    // Enqueue the new payload
+                    _payloadBuffer[key].Add(payload);
+                    // If buffer exceeds the max count, dequeue the oldest payload
+                    if (_payloadBuffer[key].Count == MaxBufferCount)
+                    {
+                        var payloadsToProcess = _payloadBuffer[key].ToList();
+                        _payloadBuffer[key].Clear();
+                        // Process the buffered payloads
+                        Task.Run(async () => await ProcessPayloadsAsync(payloadsToProcess, attemptId, deviceId));
+                    }
+                }
+            }
         }
 
         private async Task ProcessPayloadsAsync(List<string> payloads, int attemptId, string deviceId)
         {
+            if(attemptId <= 0)
+            {
+                throw new Exception("Invalid attemptId");
+            }
             try
             {
                 using (var scope = _scopeFactory.CreateScope())
@@ -334,7 +347,7 @@ namespace rdds.api.Services.MQTT
                     throw new Exception($"Failed to connect: {connectResult.ReasonString}");
                 }
 
-                var topic = "rdds/device/+/attempt/+";
+                var topic = "rdds/device/+";
                 await _mqttClient.SubscribeAsync(topic, HiveMQtt.MQTT5.Types.QualityOfService.AtLeastOnceDelivery).ConfigureAwait(false);
                 _logger.LogInformation($"Subscribed to {topic}");
             }

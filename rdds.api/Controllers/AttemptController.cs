@@ -135,7 +135,7 @@ namespace rdds.api.Controllers
 
             var attemptModel = attemptDto.ToAttemptFromCreate(existedMacAddress);
 
-            var createdAttempt = await _attemptRepo.CreateAsync(attemptModel);
+            var createdAttempt = await _attemptRepo.CreateAsync(attemptModel, deviceMac);
             
             if(createdAttempt == null)
             {
@@ -228,7 +228,7 @@ namespace rdds.api.Controllers
             return Ok("Attempt deleted successfully");
         }
 
-        [ApiExplorerSettings(IgnoreApi = true)]
+        // [ApiExplorerSettings(IgnoreApi = true)]
         [Authorize]
         [HttpPut("finish/{id}")]
         public async Task<IActionResult> Finish([FromRoute] int id)

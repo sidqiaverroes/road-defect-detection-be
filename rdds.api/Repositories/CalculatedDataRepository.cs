@@ -114,6 +114,7 @@ namespace rdds.api.Repositories
 
             query = query.Where(cd => cd.AttemptId == attemptId);
 
+
             if (startDateTime.HasValue)
             {
                 query = query.Where(cd => cd.Timestamp.Date >= startDateTime.Value);
