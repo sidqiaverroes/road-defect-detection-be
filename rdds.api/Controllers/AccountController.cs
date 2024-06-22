@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Identity;
@@ -24,12 +26,16 @@ namespace rdds.api.Controllers
         private readonly ITokenService _tokenService;
         private readonly SignInManager<AppUser> _signinManager;
         private readonly IAccountRepository _accountRepo;
-        public AccountController(UserManager<AppUser> userManager, ITokenService tokenService, SignInManager<AppUser> signInManager, IAccountRepository accountRepo)
+        private readonly IAuthenticationService _authenticationService;
+        private readonly ITokenBlacklistService _tokenBlacklistService;
+        public AccountController(UserManager<AppUser> userManager, ITokenService tokenService, SignInManager<AppUser> signInManager, IAccountRepository accountRepo, IAuthenticationService authenticationService, ITokenBlacklistService blacklistService)
         {
             _userManager = userManager;
             _tokenService = tokenService;
             _signinManager = signInManager;
             _accountRepo = accountRepo;
+            _authenticationService = authenticationService;
+            _tokenBlacklistService = blacklistService;
         }
         
         [EnableCors]
@@ -134,6 +140,7 @@ namespace rdds.api.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
+
 
             var user = await _userManager.Users.FirstOrDefaultAsync(x => x.UserName == loginDto.Username.ToLower());
 
@@ -264,6 +271,18 @@ namespace rdds.api.Controllers
                 return StatusCode(500, result.Errors);
 
             return Ok("User deleted successfully");
+        }
+
+        [Authorize]
+        [HttpPost("logout")]
+        [EnableCors]
+        public IActionResult Logout()
+        {
+            var token = Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
+            _tokenBlacklistService.AddTokenToBlacklist(token);
+            Console.WriteLine(token);
+
+            return Ok(new { message = "Successfully logged out" });
         }
     }
 }

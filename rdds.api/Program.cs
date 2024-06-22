@@ -8,6 +8,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using rdds.api.Data;
 using rdds.api.Interfaces;
+using rdds.api.Middleware;
 using rdds.api.Models;
 using rdds.api.Repositories;
 using rdds.api.Services;
@@ -109,9 +110,9 @@ builder.Services.AddScoped<IDeviceRepository, DeviceRepository>();
 builder.Services.AddScoped<IAttemptRepository, AttemptRepository>();
 builder.Services.AddScoped<IRoadDataRepository, RoadDataRepository>();
 builder.Services.AddScoped<ITokenService, TokenService>();
-// builder.Services.AddScoped<IAccessTypeRepository, AccessTypeRepository>();
 builder.Services.AddScoped<IRoadCategoryRepository, RoadCategoryRepository>();
 builder.Services.AddScoped<ICalculatedDataRepository, CalculatedDataRepository>();
+builder.Services.AddSingleton<ITokenBlacklistService, TokenBlacklistService>();
 builder.Services.AddSingleton<CalculationService>();
 builder.Services.AddSingleton(sp =>
 {
@@ -156,6 +157,8 @@ app.UseCors(options =>
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.UseMiddleware<TokenMiddleware>();
 
 app.UseWebSockets();
 
