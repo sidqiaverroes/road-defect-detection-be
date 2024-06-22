@@ -90,13 +90,13 @@ namespace rdds.api.Services.MQTT
         private async Task HandleStartMessage(string deviceMac)
         {
             var uniqueId = Guid.NewGuid();
-            _logger.LogInformation($"[{DateTime.Now:O}] [{uniqueId}] Handling start message for device {deviceMac}");
+            // _logger.LogInformation($"[{DateTime.Now:O}] [{uniqueId}] Handling start message for device {deviceMac}");
 
             await _semaphore.WaitAsync();
 
             try
             {
-                _logger.LogInformation($"[{DateTime.Now:O}] [{uniqueId}] Entered lock for device {deviceMac}");
+                // _logger.LogInformation($"[{DateTime.Now:O}] [{uniqueId}] Entered lock for device {deviceMac}");
             
                 using (var scope = _scopeFactory.CreateScope())
                 {
@@ -131,7 +131,7 @@ namespace rdds.api.Services.MQTT
             finally
             {
                 _semaphore.Release();
-                _logger.LogInformation($"[{DateTime.Now:O}] [{uniqueId}] Exiting lock for device {deviceMac}");
+                // _logger.LogInformation($"[{DateTime.Now:O}] [{uniqueId}] Exiting lock for device {deviceMac}");
             }
         }
 
@@ -195,6 +195,7 @@ namespace rdds.api.Services.MQTT
             {
                 throw new Exception("Invalid attemptId");
             }
+            await _semaphore.WaitAsync();
             try
             {
                 using (var scope = _scopeFactory.CreateScope())
@@ -236,11 +237,11 @@ namespace rdds.api.Services.MQTT
                     int samplingFrequency = 50;
                     InternationalRoughnessIndex IRIData = CalculateIRI(roadDataList, samplingFrequency);
 
-                    // // Save road data
-                    // await _roadDataRepo.CreateFromMqttAsync(sensorDataList, attemptId);
+                    // Save road data
+                    await _roadDataRepo.CreateFromMqttAsync(sensorDataList, attemptId);
 
-                    // // Save calculated data
-                    // await _calculatedDataRepo.CreateFromMqttAsync(sensorDataList, IRIData, attemptId);
+                    // Save calculated data
+                    await _calculatedDataRepo.CreateFromMqttAsync(sensorDataList, IRIData, attemptId);
 
                     //Generate json websocket payload
                     var payloadList = new List<WebsocketPayload>();
@@ -275,6 +276,10 @@ namespace rdds.api.Services.MQTT
             catch (Exception ex)
             {
                 _logger.LogError($"Error processing payloads: {ex.Message}");
+            }
+            finally
+            {
+                _semaphore.Release();
             }
         }
 

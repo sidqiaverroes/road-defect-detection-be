@@ -73,7 +73,7 @@ namespace rdds.api.Data
 
             builder.Entity<CalculatedData>()
             .HasOne(cd => cd.Attempt)
-            .WithMany(a => a.CalculatedData)
+            .WithMany(a => a.CalculatedDatas)
             .HasForeignKey(cd => cd.AttemptId);
 
             builder.Entity<Device>()
@@ -86,7 +86,13 @@ namespace rdds.api.Data
             .HasMany(a => a.RoadDatas)
             .WithOne(rd => rd.Attempt)
             .HasForeignKey(rd => rd.AttemptId)
-            .OnDelete(DeleteBehavior.Cascade);;
+            .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<Attempt>()
+            .HasMany(a => a.CalculatedDatas)
+            .WithOne(cd => cd.Attempt)
+            .HasForeignKey(cd => cd.AttemptId)
+            .OnDelete(DeleteBehavior.Cascade);
             
             // Configure many-to-many relationship between AppUser and Permission
             builder.Entity<UserPermission>()

@@ -9,7 +9,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace rdds.api.Migrations
 {
     /// <inheritdoc />
-    public partial class userpermssionrelationship : Migration
+    public partial class @new : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -72,7 +72,7 @@ namespace rdds.api.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Name = table.Column<string>(type: "text", nullable: false),
+                    Name = table.Column<string>(type: "text", nullable: true),
                     TotalLength = table.Column<float>(type: "real", nullable: false)
                 },
                 constraints: table =>
@@ -243,7 +243,7 @@ namespace rdds.api.Migrations
                     LastModified = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     IsFinished = table.Column<bool>(type: "boolean", nullable: false),
                     FinishedOn = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
-                    DeviceId = table.Column<string>(type: "text", nullable: true),
+                    DeviceId = table.Column<string>(type: "text", nullable: false),
                     RoadCategoryId = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
@@ -289,7 +289,8 @@ namespace rdds.api.Migrations
                         name: "FK_CalculatedDatas_Attempts_AttemptId",
                         column: x => x.AttemptId,
                         principalTable: "Attempts",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -322,8 +323,8 @@ namespace rdds.api.Migrations
                 columns: new[] { "Id", "ConcurrencyStamp", "Name", "NormalizedName" },
                 values: new object[,]
                 {
-                    { "8f2dba8d-3612-4b25-a0eb-0a10668531df", null, "User", "USER" },
-                    { "ffa4166a-8edc-462d-bbc7-cd7388c2f466", null, "Admin", "ADMIN" }
+                    { "18a5189f-091d-417e-af74-fcf4d83f440a", null, "Admin", "ADMIN" },
+                    { "5ecd203b-8575-4365-9472-c9442f4e702c", null, "User", "USER" }
                 });
 
             migrationBuilder.CreateIndex(

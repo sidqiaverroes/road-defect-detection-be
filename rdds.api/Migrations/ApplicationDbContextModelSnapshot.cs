@@ -50,13 +50,13 @@ namespace rdds.api.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "21fdfc15-c8df-4726-95e3-9df518808651",
+                            Id = "18a5189f-091d-417e-af74-fcf4d83f440a",
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         },
                         new
                         {
-                            Id = "c182e922-0db7-4612-a32b-33117660b9a1",
+                            Id = "5ecd203b-8575-4365-9472-c9442f4e702c",
                             Name = "User",
                             NormalizedName = "USER"
                         });
@@ -476,8 +476,9 @@ namespace rdds.api.Migrations
             modelBuilder.Entity("rdds.api.Models.CalculatedData", b =>
                 {
                     b.HasOne("rdds.api.Models.Attempt", "Attempt")
-                        .WithMany("CalculatedData")
-                        .HasForeignKey("AttemptId");
+                        .WithMany("CalculatedDatas")
+                        .HasForeignKey("AttemptId")
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.OwnsOne("rdds.api.Models.Coordinate", "Coordinate", b1 =>
                         {
@@ -625,7 +626,7 @@ namespace rdds.api.Migrations
 
             modelBuilder.Entity("rdds.api.Models.Attempt", b =>
                 {
-                    b.Navigation("CalculatedData");
+                    b.Navigation("CalculatedDatas");
 
                     b.Navigation("RoadDatas");
                 });

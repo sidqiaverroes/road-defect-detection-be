@@ -12,8 +12,8 @@ using rdds.api.Data;
 namespace rdds.api.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20240619065457_userpermssionrelationship")]
-    partial class userpermssionrelationship
+    [Migration("20240622000018_new")]
+    partial class @new
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -53,13 +53,13 @@ namespace rdds.api.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "ffa4166a-8edc-462d-bbc7-cd7388c2f466",
+                            Id = "18a5189f-091d-417e-af74-fcf4d83f440a",
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         },
                         new
                         {
-                            Id = "8f2dba8d-3612-4b25-a0eb-0a10668531df",
+                            Id = "5ecd203b-8575-4365-9472-c9442f4e702c",
                             Name = "User",
                             NormalizedName = "USER"
                         });
@@ -250,6 +250,7 @@ namespace rdds.api.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("DeviceId")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<DateTime?>("FinishedOn")
@@ -350,7 +351,6 @@ namespace rdds.api.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Name")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<float>("TotalLength")
@@ -463,7 +463,8 @@ namespace rdds.api.Migrations
                     b.HasOne("rdds.api.Models.Device", "Device")
                         .WithMany("Attempts")
                         .HasForeignKey("DeviceId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("rdds.api.Models.RoadCategory", "RoadCategory")
                         .WithMany("Attempts")
@@ -478,8 +479,9 @@ namespace rdds.api.Migrations
             modelBuilder.Entity("rdds.api.Models.CalculatedData", b =>
                 {
                     b.HasOne("rdds.api.Models.Attempt", "Attempt")
-                        .WithMany("CalculatedData")
-                        .HasForeignKey("AttemptId");
+                        .WithMany("CalculatedDatas")
+                        .HasForeignKey("AttemptId")
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.OwnsOne("rdds.api.Models.Coordinate", "Coordinate", b1 =>
                         {
@@ -627,7 +629,7 @@ namespace rdds.api.Migrations
 
             modelBuilder.Entity("rdds.api.Models.Attempt", b =>
                 {
-                    b.Navigation("CalculatedData");
+                    b.Navigation("CalculatedDatas");
 
                     b.Navigation("RoadDatas");
                 });
