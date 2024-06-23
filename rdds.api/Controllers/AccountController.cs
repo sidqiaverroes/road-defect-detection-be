@@ -111,26 +111,51 @@ namespace rdds.api.Controllers
 
             if (createdUser.Succeeded)
             {
+                // Assign role "User"
                 var roleResult = await _userManager.AddToRoleAsync(appUser, "User");
-                if (roleResult.Succeeded)
-                {
-                    return Ok(
-                        new NewUserDto
-                        {
-                            UserName = appUser.UserName,
-                            Email = appUser.Email,
-                            Token = await _tokenService.CreateToken(appUser)
-                        }
-                    );
-                }
-                else
+
+                if (!roleResult.Succeeded)
                 {
                     return StatusCode(500, roleResult.Errors);
                 }
+
+                // Assign permissions based on PermissionId list
+                if (registerDto.PermissionIds != null && registerDto.PermissionIds.Any())
+                {
+                    // Assign permission
+                    var assignPermissionResult = await AssignPermissionToUserAsync(appUser.Id, registerDto.PermissionIds);
+                    
+                    if (!assignPermissionResult.Succeeded)
+                    {
+                        // Handle error when assigning permission
+                        return StatusCode(500, $"Failed to assign permission: {assignPermissionResult.Errors}");
+                    }
+                    
+                }
+
+                return Ok(new NewUserDto
+                {
+                    UserName = appUser.UserName,
+                    Email = appUser.Email,
+                    Token = await _tokenService.CreateToken(appUser)
+                });
             }
             else
             {
                 return StatusCode(500, createdUser.Errors);
+            }
+        }
+
+        private async Task<IdentityResult> AssignPermissionToUserAsync(string userId, List<int> permissionIds)
+        {
+            try
+            {
+                await _accountRepo.UpdateUserPermissionsAsync(userId, permissionIds);
+                return IdentityResult.Success;
+            }
+            catch (Exception ex)
+            {
+                return IdentityResult.Failed(new IdentityError { Description = ex.Message });
             }
         }
 
