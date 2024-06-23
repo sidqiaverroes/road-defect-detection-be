@@ -204,7 +204,6 @@ namespace rdds.api.Controllers
         [HttpPut("update-user-details/{userId}")]
         public async Task<IActionResult> UpdateUserDetails(string userId, [FromBody] UpdateUserDetailsDto model)
         {
-
             var user = await _userManager.FindByIdAsync(userId);
 
             if (user == null)
@@ -233,6 +232,18 @@ namespace rdds.api.Controllers
             if (!string.IsNullOrEmpty(model.NewUsername))
             {
                 var result = await _userManager.SetUserNameAsync(user, model.NewUsername);
+
+                if (!result.Succeeded)
+                {
+                    return StatusCode(500, result.Errors);
+                }
+            }
+
+            // Update Email
+            if (!string.IsNullOrEmpty(model.NewEmail))
+            {
+                var token = await _userManager.GenerateChangeEmailTokenAsync(user, model.NewEmail);
+                var result = await _userManager.ChangeEmailAsync(user, model.NewEmail, token);
 
                 if (!result.Succeeded)
                 {
