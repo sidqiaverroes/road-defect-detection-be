@@ -12,7 +12,7 @@ using rdds.api.Data;
 namespace rdds.api.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20240622000018_new")]
+    [Migration("20240624140620_new")]
     partial class @new
     {
         /// <inheritdoc />
@@ -53,13 +53,13 @@ namespace rdds.api.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "18a5189f-091d-417e-af74-fcf4d83f440a",
+                            Id = "f851e634-1884-4a5a-97ba-d247f05edc77",
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         },
                         new
                         {
-                            Id = "5ecd203b-8575-4365-9472-c9442f4e702c",
+                            Id = "649aa25e-738b-4344-862f-87014efb4def",
                             Name = "User",
                             NormalizedName = "USER"
                         });

@@ -323,8 +323,8 @@ namespace rdds.api.Migrations
                 columns: new[] { "Id", "ConcurrencyStamp", "Name", "NormalizedName" },
                 values: new object[,]
                 {
-                    { "18a5189f-091d-417e-af74-fcf4d83f440a", null, "Admin", "ADMIN" },
-                    { "5ecd203b-8575-4365-9472-c9442f4e702c", null, "User", "USER" }
+                    { "649aa25e-738b-4344-862f-87014efb4def", null, "User", "USER" },
+                    { "f851e634-1884-4a5a-97ba-d247f05edc77", null, "Admin", "ADMIN" }
                 });
 
             migrationBuilder.CreateIndex(

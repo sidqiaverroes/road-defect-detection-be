@@ -10,17 +10,44 @@ namespace rdds.api.Services.Calculation
 {
     public class CalculationService
     {
-        private const int Nperseg = 64; // Number of points per segment
+        private const int nperseg = 128; // Number of points per segment
 
-        public (double[] frequencies, double[] psd) CalculatePSD(double[] data, int fs)
+        public (double[] f, double[] psd) CalculatePSD(double[] data, int fs)
         {
-            var signal = data.Select(x => new Complex(x, 0)).ToArray();
-            Fourier.Forward(signal, FourierOptions.NoScaling);
+            int n = data.Length;
+            
+            // Use MathNet.Numerics for calculating Welch's method
+            var psd = new double[nperseg / 2 + 1];
+            var freqs = new double[nperseg / 2 + 1];
+            double[] window = Window.Hamming(nperseg);
+            var segmentCount = (n - nperseg) / (nperseg / 2) + 1;
+            
+            for (int i = 0; i < segmentCount; i++)
+            {
+                var segment = data.Skip(i * nperseg / 2).Take(nperseg).ToArray();
+                var fft = new Complex[nperseg];
+                for (int j = 0; j < nperseg; j++)
+                {
+                    fft[j] = segment[j] * window[j];
+                }
+                
+                Fourier.Forward(fft, FourierOptions.Matlab);
+                for (int j = 0; j < nperseg / 2 + 1; j++)
+                {
+                    var power = fft[j].MagnitudeSquared() / (nperseg * fs);
+                    if (i == 0)
+                    {
+                        psd[j] = power;
+                        freqs[j] = (double)j * fs / nperseg;
+                    }
+                    else
+                    {
+                        psd[j] = (psd[j] + power) / 2.0;
+                    }
+                }
+            }
 
-            var psd = signal.Select(x => x.MagnitudeSquared() / (fs * Nperseg)).ToArray();
-            var frequencies = Fourier.FrequencyScale(fs, Nperseg);
-
-            return (frequencies, psd);
+            return (freqs, psd);
         }
 
         public double CalculateIRI(double[] psd, double[] frequencies)

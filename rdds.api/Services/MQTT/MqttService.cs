@@ -28,7 +28,7 @@ namespace rdds.api.Services.MQTT
         private readonly Dictionary<string, List<string>> _payloadBuffer = new Dictionary<string, List<string>>();
         private static readonly SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
         private const int MaxBufferCount = 3;
-        private readonly object _attemptLock = new();
+        private bool _handlingStartMessage = false;
 
         public MqttService(ILogger<MqttService> logger, HiveMQClient mqttClient, IServiceScopeFactory scopeFactory, CalculationService calculationService)
         {
@@ -56,11 +56,12 @@ namespace rdds.api.Services.MQTT
                         _logger.LogWarning($"Device ID {deviceId} is not registered.");
                         return;
                     }
-
+                    
                     // Handle "Start", regular payloads, and "End"
                     if (payload == "Start")
                     {
                         await HandleStartMessage(deviceMac);
+                        _logger.LogWarning($"Received payload START");
                     }
                     else if (payload == "End")
                     {
@@ -68,7 +69,9 @@ namespace rdds.api.Services.MQTT
                     }
                     else
                     {
+                        await WaitForStartMessageCompletion();
                         await HandleRegularPayload(key, payload, deviceMac);
+                        _logger.LogWarning($"Received payload REGULAR");
                     }
                 }
                 else
@@ -76,6 +79,15 @@ namespace rdds.api.Services.MQTT
                     _logger.LogWarning($"Received payload with unmatched topic format: {topic}");
                 }
             };
+        }
+
+        private async Task WaitForStartMessageCompletion()
+        {
+            // Wait until HandleStartMessage completes
+            while (_handlingStartMessage)
+            {
+                await Task.Delay(100); // Adjust delay time as needed
+            }
         }
 
         private async Task<string?> CheckDeviceRegisteredAsync(string deviceId)
@@ -89,9 +101,10 @@ namespace rdds.api.Services.MQTT
 
         private async Task HandleStartMessage(string deviceMac)
         {
+            _logger.LogWarning($"handling START");
             var uniqueId = Guid.NewGuid();
             // _logger.LogInformation($"[{DateTime.Now:O}] [{uniqueId}] Handling start message for device {deviceMac}");
-
+            _handlingStartMessage = true;
             await _semaphore.WaitAsync();
 
             try
@@ -131,6 +144,8 @@ namespace rdds.api.Services.MQTT
             finally
             {
                 _semaphore.Release();
+                _handlingStartMessage = false;
+                _logger.LogWarning($"handling START COMPLETE");
                 // _logger.LogInformation($"[{DateTime.Now:O}] [{uniqueId}] Exiting lock for device {deviceMac}");
             }
         }
@@ -156,6 +171,7 @@ namespace rdds.api.Services.MQTT
 
         private async Task HandleRegularPayload(string key, string payload, string deviceId)
         {
+            _logger.LogWarning($"handling REG");
             using (var scope = _scopeFactory.CreateScope())
             {
                 var attemptRepo = scope.ServiceProvider.GetRequiredService<IAttemptRepository>();
@@ -232,7 +248,7 @@ namespace rdds.api.Services.MQTT
                         }
                     }
                     
-
+                     _logger.LogWarning($"--- processing: {roadDataList.Count}");
                     // Calculate road data to get IRI
                     int samplingFrequency = 50;
                     InternationalRoughnessIndex IRIData = CalculateIRI(roadDataList, samplingFrequency);
@@ -294,7 +310,7 @@ namespace rdds.api.Services.MQTT
                 var (rollFrequencies, rollPsd) = _calculationService.CalculatePSD(rollData, samplingFrequency);
                 var (pitchFrequencies, pitchPsd) = _calculationService.CalculatePSD(pitchData, samplingFrequency);
                 var (euclideanFrequencies, euclideanPsd) = _calculationService.CalculatePSD(euclideanData, samplingFrequency);
-
+                _logger.LogError($"PSD DATAAAAA: {rollFrequencies.Length}, {rollPsd.Length}");
                 var iriRoll = _calculationService.CalculateIRI(rollPsd, rollFrequencies);
                 var iriPitch = _calculationService.CalculateIRI(pitchPsd, pitchFrequencies);
                 var iriEuclidean = _calculationService.CalculateIRI(euclideanPsd, euclideanFrequencies);
