@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using rdds.api.Data;
 using rdds.api.Dtos.SummaryData;
@@ -26,7 +28,9 @@ namespace rdds.api.Controllers
             _attemptSumDataRepository = attemptSumDataRepository;
             _roadCategoryRepository = roadCategoryRepository;
         }
-
+        
+        [EnableCors]
+        [Authorize]
         [HttpGet]
         public async Task<IActionResult> GetSummaries()
         {
@@ -42,6 +46,8 @@ namespace rdds.api.Controllers
             }
         }
 
+        [EnableCors]
+        [Authorize]
         [HttpGet("all")]
         public async Task<IActionResult> GetAllSummaries()
         {
@@ -131,6 +137,8 @@ namespace rdds.api.Controllers
             }
         }
 
+        [EnableCors]
+        [Authorize]
         [HttpGet("device/{deviceId}")]
         public async Task<IActionResult> GetDeviceSummary([FromRoute] string deviceId)
         {
@@ -214,6 +222,8 @@ namespace rdds.api.Controllers
             }
         }
 
+        [EnableCors]
+        [Authorize]
         [HttpGet("attempt/{attemptId}")]
         public async Task<IActionResult> GetSummaryByAttemptId(int attemptId)
         {
@@ -234,6 +244,8 @@ namespace rdds.api.Controllers
             }
         }
 
+        [EnableCors]
+        [Authorize]
         [HttpPost("{attemptId}")]
         public async Task<IActionResult> CreateSummary([FromRoute] int attemptId)
         {
