@@ -8,7 +8,7 @@ using rdds.api.Services.MQTT;
 namespace rdds.api.Controllers
 {
     [ApiExplorerSettings(IgnoreApi = true)]
-    [Route("{deviceId}/{attemptId}")]
+    [Route("{deviceId}")]
     public class WebSocketController : ControllerBase
     {
         private readonly MqttService _mqttService;
