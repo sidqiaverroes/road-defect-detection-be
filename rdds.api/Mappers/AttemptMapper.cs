@@ -20,7 +20,9 @@ namespace rdds.api.Mappers
                 LastModified = attemptModel.LastModified,
                 IsFinished = attemptModel.IsFinished,
                 FinishedOn = attemptModel.FinishedOn,
-                DeviceId = attemptModel.DeviceId
+                DeviceId = attemptModel.DeviceId,
+                RoadCategoryId = attemptModel.RoadCategoryId,
+                RoadCategoryName = attemptModel.RoadCategory.Name
             };
         }
 

@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using rdds.api.Data;
 using rdds.api.Dtos.SummaryData;
 using rdds.api.Interfaces;
+using rdds.api.Mappers;
 using rdds.api.Models;
 
 
@@ -26,13 +27,103 @@ namespace rdds.api.Controllers
             _roadCategoryRepository = roadCategoryRepository;
         }
 
+        [HttpGet]
+        public async Task<IActionResult> GetSummaries()
+        {
+            try
+            {
+                var summaries = await _attemptSumDataRepository.GetAllAsync();
+                var summaresDto = summaries.Select(s => s.ToSummaryDataDto());
+                return Ok(summaresDto);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error retrieving summaries: {ex.Message}");
+            }
+        }
+
         [HttpGet("all")]
         public async Task<IActionResult> GetAllSummaries()
         {
             try
             {
-                var summaries = await _attemptSumDataRepository.GetAllAsync();
-                return Ok(summaries);
+                // Retrieve all AttemptSummaryData
+                var attemptSummaryDataList = await _attemptSumDataRepository.GetAllAsync();
+
+                if (attemptSummaryDataList == null || !attemptSummaryDataList.Any())
+                {
+                    return NotFound("No AttemptSummaryData found.");
+                }
+                var attemptSummaryDataListDto = attemptSummaryDataList.Select(a => a.ToSummaryDataDto());
+                // Filter out entries without RoadCategoryId
+                var validAttemptSummaryDataList = attemptSummaryDataListDto
+                    .Where(a => a.Attempt.RoadCategoryId.HasValue)
+                    .ToList();
+
+                if (!validAttemptSummaryDataList.Any())
+                {
+                    return NotFound("No valid AttemptSummaryData found with RoadCategoryId.");
+                }
+
+                // Group data by RoadCategoryId
+                var groupedData = validAttemptSummaryDataList
+                    .GroupBy(a => a.Attempt.RoadCategoryId.Value);
+
+                var deviceSummaryDataDto = new DeviceSummaryDataDto
+                {
+                    TotalLength = validAttemptSummaryDataList.Sum(a => a.TotalLength),
+                    DeviceDatas = new List<DeviceDataDto>()
+                };
+
+                foreach (var group in groupedData)
+                {
+                    var roadCategoryId = group.Key;
+                    var dataList = group.ToList();
+
+                    // Get the road category name by its ID
+                    var roadCategory = await _roadCategoryRepository.GetByIdAsync(roadCategoryId);
+
+                    // Check if the road category was found
+                    if (roadCategory == null)
+                    {
+                        return NotFound($"Road category with ID {roadCategoryId} not found.");
+                    }
+
+                    var roadCategoryName = roadCategory.Name; // Assuming the name property
+
+                    // Calculate total lengths and percentages for each category
+                    var totalLength = dataList.Sum(a => a.TotalLength);
+                    var baikLength = dataList.Sum(a => a.LengthData.Baik);
+                    var sedangLength = dataList.Sum(a => a.LengthData.Sedang);
+                    var rusakRinganLength = dataList.Sum(a => a.LengthData.RusakRingan);
+                    var rusakBeratLength = dataList.Sum(a => a.LengthData.RusakBerat);
+
+                    var lengthData = new LengthData
+                    {
+                        Baik = baikLength,
+                        Sedang = sedangLength,
+                        RusakRingan = rusakRinganLength,
+                        RusakBerat = rusakBeratLength
+                    };
+
+                    var percentageData = new PercentageData
+                    {
+                        Baik = baikLength / totalLength * 100,
+                        Sedang = sedangLength / totalLength * 100,
+                        RusakRingan = rusakRinganLength / totalLength * 100,
+                        RusakBerat = rusakBeratLength / totalLength * 100
+                    };
+
+                    deviceSummaryDataDto.DeviceDatas.Add(new DeviceDataDto
+                    {
+                        RoadCategory = roadCategoryName,
+                        TotalLength = totalLength,
+                        LengthData = lengthData,
+                        PercentageData = percentageData
+                    });
+                }
+
+                return Ok(deviceSummaryDataDto);
             }
             catch (Exception ex)
             {

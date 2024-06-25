@@ -84,12 +84,14 @@ namespace rdds.api.Repositories
 
         public async Task<List<Attempt>> GetAllAsync()
         {
-            return await _context.Attempts.ToListAsync();
+            return await _context.Attempts.Include(a => a.RoadCategory).ToListAsync();
         }
 
         public async Task<Attempt?> GetByIdAsync(int id)
         {
-            return await _context.Attempts.FindAsync(id);
+            return await _context.Attempts
+            .Include(a => a.RoadCategory)
+            .FirstOrDefaultAsync(a => a.Id == id);
         }
 
         public async Task<bool> IsExistedAsync(int id)

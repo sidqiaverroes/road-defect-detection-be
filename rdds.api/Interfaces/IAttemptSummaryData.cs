@@ -9,7 +9,7 @@ namespace rdds.api.Interfaces
     public interface IAttemptSummaryData
     {
         Task<AttemptSummaryData?> CreateAsync(AttemptSummaryData sumModel);
-        Task<IEnumerable<AttemptSummaryData>> GetAllAsync();
+        Task<List<AttemptSummaryData>> GetAllAsync();
         Task<AttemptSummaryData?> GetByAttemptIdAsync(int attemptId);
         Task<List<AttemptSummaryData>> GetAllByDeviceIdAsync(string deviceId);
     }

@@ -34,10 +34,13 @@ namespace rdds.api.Repositories
             }
         }
 
-        public async Task<IEnumerable<AttemptSummaryData>> GetAllAsync()
+        public async Task<List<AttemptSummaryData>> GetAllAsync()
         {
-            return await _context.AttemptSummaryDatas.ToListAsync();
+            return await _context.AttemptSummaryDatas
+                .Include(a => a.Attempt)
+                .ToListAsync();
         }
+
 
         public async Task<AttemptSummaryData?> GetByAttemptIdAsync(int attemptId)
         {

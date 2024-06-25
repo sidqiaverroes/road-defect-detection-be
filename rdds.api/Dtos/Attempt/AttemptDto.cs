@@ -15,5 +15,7 @@ namespace rdds.api.Dtos.Attempt
         public bool IsFinished { get; set; }
         public DateTime? FinishedOn { get; set; }
         public string? DeviceId {get; set;}
+        public int? RoadCategoryId { get; set; }
+        public string? RoadCategoryName { get; set; }
     }
 }
