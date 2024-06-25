@@ -27,7 +27,7 @@ namespace rdds.api.Services.MQTT
         private readonly Dictionary<string, List<WebSocket>> _topicToWebSocketsMap;
         private readonly Dictionary<string, List<string>> _payloadBuffer = new Dictionary<string, List<string>>();
         private static readonly SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
-        private const int MaxBufferCount = 3;
+        private const int MaxBufferCount = 1;
         private bool _handlingStartMessage = false;
 
         public MqttService(ILogger<MqttService> logger, HiveMQClient mqttClient, IServiceScopeFactory scopeFactory, CalculationService calculationService)
