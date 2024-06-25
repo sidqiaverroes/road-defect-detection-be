@@ -68,7 +68,7 @@ namespace rdds.api.Repositories
                         Latitude = lastSensorData.latitude,
                         Longitude = lastSensorData.longitude
                     },
-                    Timestamp = DateTime.Now, // Assuming the timestamp of the first sensor data
+                    Timestamp = DateTimeOffset.UtcNow, // Use UTC timestamp to ensure consistency
                     AttemptId = attemptId
                 };
 
@@ -76,11 +76,12 @@ namespace rdds.api.Repositories
                 await _context.CalculatedDatas.AddAsync(calculatedData);
                 await _context.SaveChangesAsync();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                throw;
+                throw new ApplicationException("Error creating CalculatedData from MQTT data.", ex);
             }
         }
+
 
 
         public async Task<bool> DeleteAllAsync()
