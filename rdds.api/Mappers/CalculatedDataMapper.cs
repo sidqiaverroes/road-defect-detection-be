@@ -31,7 +31,7 @@ namespace rdds.api.Mappers
                     Latitude = calculatedData.Coordinate.Latitude,
                     Longitude = calculatedData.Coordinate.Longitude
                 },
-                Timestamp = calculatedData.Timestamp.ToString("yyyy-MM-dd HH:mm:ss.fff"),
+                Timestamp = calculatedData.Timestamp.ToString("yyyy-MM-dd HH:mm:ss.ff"),
                 AttemptId = calculatedData.AttemptId
             };
         }
@@ -39,9 +39,9 @@ namespace rdds.api.Mappers
         public static CalculatedData ToCalculatedDataFromCreate(this CreateCalculatedDataDto calculatedDataDto, int attemptId)
         {
             DateTime timestamp;
-            if (!DateTime.TryParseExact(calculatedDataDto.Timestamp, "yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture, DateTimeStyles.None, out timestamp))
+            if (!DateTime.TryParseExact(calculatedDataDto.Timestamp, "yyyy-MM-dd HH:mm:ss.ff", CultureInfo.InvariantCulture, DateTimeStyles.None, out timestamp))
             {
-                throw new ArgumentException($"Invalid timestamp format: {calculatedDataDto.Timestamp}. Expected format: yyyy-MM-dd HH:mm:ss.fff");
+                throw new ArgumentException($"Invalid timestamp format: {calculatedDataDto.Timestamp}. Expected format: yyyy-MM-dd HH:mm:ss.ff");
             }
 
             return new CalculatedData

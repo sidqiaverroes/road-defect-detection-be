@@ -33,9 +33,9 @@ namespace rdds.api.Mappers
             // Convert Timestamp string to DateTime
             DateTime timestamp;
             // Attempt to parse the timestamp string to DateTime using specific format
-            if (!DateTime.TryParseExact(roadDataDto.Timestamp, "yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture, DateTimeStyles.None, out timestamp))
+            if (!DateTime.TryParseExact(roadDataDto.Timestamp, "yyyy-MM-dd HH:mm:ss.ff", CultureInfo.InvariantCulture, DateTimeStyles.None, out timestamp))
             {
-                throw new ArgumentException($"Invalid timestamp format: {roadDataDto.Timestamp}. Expected format: yyyy-MM-dd HH:mm:ss.fff");
+                throw new ArgumentException($"Invalid timestamp format: {roadDataDto.Timestamp}. Expected format: yyyy-MM-dd HH:mm:ss.ff");
             }
 
 
