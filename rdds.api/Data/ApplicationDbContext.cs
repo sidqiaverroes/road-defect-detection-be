@@ -71,6 +71,14 @@ namespace rdds.api.Data
                 iri.Property(i => i.AverageProfile).HasColumnName("Average_Profile");
             });
 
+            builder.Entity<RoadData>()
+            .HasKey(rd => rd.Timestamp);
+
+            builder.Entity<RoadData>()
+            .HasOne(cd => cd.Attempt)
+            .WithMany(a => a.RoadDatas)
+            .HasForeignKey(cd => cd.AttemptId);
+
             builder.Entity<CalculatedData>()
             .HasOne(cd => cd.Attempt)
             .WithMany(a => a.CalculatedDatas)

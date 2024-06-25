@@ -267,7 +267,7 @@ namespace rdds.api.Migrations
                 name: "CalculatedDatas",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Timestamp = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     IRI_Roll = table.Column<float>(type: "real", nullable: false),
                     IRI_Pitch = table.Column<float>(type: "real", nullable: false),
                     IRI_Euclidean = table.Column<float>(type: "real", nullable: false),
@@ -279,12 +279,11 @@ namespace rdds.api.Migrations
                     Velocity = table.Column<float>(type: "real", nullable: false),
                     Latitude = table.Column<float>(type: "real", nullable: false),
                     Longitude = table.Column<float>(type: "real", nullable: false),
-                    Timestamp = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     AttemptId = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_CalculatedDatas", x => x.Id);
+                    table.PrimaryKey("PK_CalculatedDatas", x => x.Timestamp);
                     table.ForeignKey(
                         name: "FK_CalculatedDatas_Attempts_AttemptId",
                         column: x => x.AttemptId,
@@ -297,19 +296,18 @@ namespace rdds.api.Migrations
                 name: "RoadDatas",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Timestamp = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     Roll = table.Column<float>(type: "real", nullable: false),
                     Pitch = table.Column<float>(type: "real", nullable: false),
                     Euclidean = table.Column<float>(type: "real", nullable: false),
                     Velocity = table.Column<float>(type: "real", nullable: false),
                     Latitude = table.Column<float>(type: "real", nullable: false),
                     Longitude = table.Column<float>(type: "real", nullable: false),
-                    Timestamp = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     AttemptId = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_RoadDatas", x => x.Id);
+                    table.PrimaryKey("PK_RoadDatas", x => x.Timestamp);
                     table.ForeignKey(
                         name: "FK_RoadDatas_Attempts_AttemptId",
                         column: x => x.AttemptId,
@@ -323,8 +321,8 @@ namespace rdds.api.Migrations
                 columns: new[] { "Id", "ConcurrencyStamp", "Name", "NormalizedName" },
                 values: new object[,]
                 {
-                    { "649aa25e-738b-4344-862f-87014efb4def", null, "User", "USER" },
-                    { "f851e634-1884-4a5a-97ba-d247f05edc77", null, "Admin", "ADMIN" }
+                    { "cef21c96-72fb-46d4-b717-4d5d56824c3b", null, "User", "USER" },
+                    { "e72f6bea-b66a-40bb-938c-50eeac7b2ab0", null, "Admin", "ADMIN" }
                 });
 
             migrationBuilder.CreateIndex(

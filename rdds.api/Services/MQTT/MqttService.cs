@@ -310,7 +310,7 @@ namespace rdds.api.Services.MQTT
                 var (rollFrequencies, rollPsd) = _calculationService.CalculatePSD(rollData, samplingFrequency);
                 var (pitchFrequencies, pitchPsd) = _calculationService.CalculatePSD(pitchData, samplingFrequency);
                 var (euclideanFrequencies, euclideanPsd) = _calculationService.CalculatePSD(euclideanData, samplingFrequency);
-                _logger.LogError($"PSD DATAAAAA: {rollFrequencies.Length}, {rollPsd.Length}");
+                // _logger.LogError($"PSD DATAAAAA: {rollFrequencies.Length}, {rollPsd.Length}");
                 var iriRoll = _calculationService.CalculateIRI(rollPsd, rollFrequencies);
                 var iriPitch = _calculationService.CalculateIRI(pitchPsd, pitchFrequencies);
                 var iriEuclidean = _calculationService.CalculateIRI(euclideanPsd, euclideanFrequencies);

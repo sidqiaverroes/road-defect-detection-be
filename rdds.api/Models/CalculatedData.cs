@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -7,11 +8,11 @@ namespace rdds.api.Models
 {
     public class CalculatedData
     {
-        public Guid Id { get; set; }
+        [Key]
+        public DateTimeOffset Timestamp { get; set; }
         public InternationalRoughnessIndex IRI { get; set; } = new InternationalRoughnessIndex();
         public float Velocity { get; set; }
         public Coordinate Coordinate { get; set; } = new Coordinate();
-        public DateTime Timestamp { get; set; }
         public int? AttemptId {get; set;}
         public Attempt? Attempt { get; set; }
 

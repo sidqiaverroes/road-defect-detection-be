@@ -14,7 +14,6 @@ namespace rdds.api.Mappers
         {
             return new RoadDataDto
             {
-                Id = roadDataModel.Id,
                 Roll = roadDataModel.Roll,
                 Pitch = roadDataModel.Pitch,
                 Euclidean = roadDataModel.Euclidean,

@@ -90,30 +90,23 @@ namespace rdds.api.Repositories
             }
         }
 
-        public async Task<List<CalculatedData>> GetAllByFilterAsync(int? attemptId, string startDate, string endDate)
+        public async Task<List<CalculatedData>> GetAllByFilterAsync(int? attemptId, string startDate = "", string endDate = "")
         {
-            DateTime? startDateTime = null;
-            DateTime? endDateTime = null;
-
-            if (!string.IsNullOrEmpty(startDate) && DateTime.TryParse(startDate, CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedStartDate))
-            {
-                startDateTime = parsedStartDate.Date; // Extracts the date part without time
-            }
-
-            if (!string.IsNullOrEmpty(endDate) && DateTime.TryParse(endDate, CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedEndDate))
-            {
-                endDateTime = parsedEndDate.Date; // Extracts the date part without time
-            }
+            // Parse dates if provided
+            DateTime? startDateTime = string.IsNullOrEmpty(startDate) ? (DateTime?)null : DateTime.Parse(startDate, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal).Date;
+            DateTime? endDateTime = string.IsNullOrEmpty(endDate) ? (DateTime?)null : DateTime.Parse(endDate, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal).Date;
 
             if (startDateTime.HasValue && endDateTime.HasValue && endDateTime < startDateTime)
             {
                 throw new ArgumentException("End date must be greater than start date.");
             }
 
-            var query = _context.CalculatedDatas.AsQueryable();
+            var query = _context.CalculatedDatas.AsNoTracking().AsQueryable();
 
-            query = query.Where(cd => cd.AttemptId == attemptId);
-
+            if (attemptId.HasValue)
+            {
+                query = query.Where(cd => cd.AttemptId == attemptId.Value);
+            }
 
             if (startDateTime.HasValue)
             {
@@ -125,9 +118,11 @@ namespace rdds.api.Repositories
                 query = query.Where(cd => cd.Timestamp.Date <= endDateTime.Value);
             }
 
+            // Apply pagination
             var calculatedDataList = await query.ToListAsync();
 
             return calculatedDataList;
         }
+
     }
 }

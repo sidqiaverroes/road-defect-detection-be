@@ -35,9 +35,9 @@ namespace rdds.api.Repositories
 
                 return true;
             }
-            catch (ArgumentException ex)
+            catch (DbUpdateException ex)
             {
-                throw;
+                return false;
             }
             catch (Exception ex)
             {
@@ -131,9 +131,13 @@ namespace rdds.api.Repositories
                 // Convert CreateRoadDataDto to RoadData entities
                 var roadDataModels = roadDataList.Select(dto => dto.ToRoadDataFromCreate(attemptId)).ToList();
 
-                // Add range of roadDataModels to context and save changes
-                await _context.RoadDatas.AddRangeAsync(roadDataModels);
-                await _context.SaveChangesAsync();
+                using (var transaction = await _context.Database.BeginTransactionAsync())
+                {
+                    await _context.RoadDatas.AddRangeAsync(roadDataModels);
+                    await _context.SaveChangesAsync();
+                    await transaction.CommitAsync();
+                }
+
             }
             catch (Exception)
             {

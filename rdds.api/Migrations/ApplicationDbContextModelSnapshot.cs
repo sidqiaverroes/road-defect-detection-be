@@ -50,13 +50,13 @@ namespace rdds.api.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "f851e634-1884-4a5a-97ba-d247f05edc77",
+                            Id = "e72f6bea-b66a-40bb-938c-50eeac7b2ab0",
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         },
                         new
                         {
-                            Id = "649aa25e-738b-4344-862f-87014efb4def",
+                            Id = "cef21c96-72fb-46d4-b717-4d5d56824c3b",
                             Name = "User",
                             NormalizedName = "USER"
                         });
@@ -276,20 +276,16 @@ namespace rdds.api.Migrations
 
             modelBuilder.Entity("rdds.api.Models.CalculatedData", b =>
                 {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                    b.Property<DateTimeOffset>("Timestamp")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int?>("AttemptId")
                         .HasColumnType("integer");
 
-                    b.Property<DateTime>("Timestamp")
-                        .HasColumnType("timestamp without time zone");
-
                     b.Property<float>("Velocity")
                         .HasColumnType("real");
 
-                    b.HasKey("Id");
+                    b.HasKey("Timestamp");
 
                     b.HasIndex("AttemptId");
 
@@ -360,9 +356,8 @@ namespace rdds.api.Migrations
 
             modelBuilder.Entity("rdds.api.Models.RoadData", b =>
                 {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                    b.Property<DateTimeOffset>("Timestamp")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int?>("AttemptId")
                         .HasColumnType("integer");
@@ -376,13 +371,10 @@ namespace rdds.api.Migrations
                     b.Property<float>("Roll")
                         .HasColumnType("real");
 
-                    b.Property<DateTime>("Timestamp")
-                        .HasColumnType("timestamp without time zone");
-
                     b.Property<float>("Velocity")
                         .HasColumnType("real");
 
-                    b.HasKey("Id");
+                    b.HasKey("Timestamp");
 
                     b.HasIndex("AttemptId");
 
@@ -482,8 +474,8 @@ namespace rdds.api.Migrations
 
                     b.OwnsOne("rdds.api.Models.Coordinate", "Coordinate", b1 =>
                         {
-                            b1.Property<Guid>("CalculatedDataId")
-                                .HasColumnType("uuid");
+                            b1.Property<DateTimeOffset>("CalculatedDataTimestamp")
+                                .HasColumnType("timestamp with time zone");
 
                             b1.Property<float>("Latitude")
                                 .HasColumnType("real")
@@ -493,18 +485,18 @@ namespace rdds.api.Migrations
                                 .HasColumnType("real")
                                 .HasColumnName("Longitude");
 
-                            b1.HasKey("CalculatedDataId");
+                            b1.HasKey("CalculatedDataTimestamp");
 
                             b1.ToTable("CalculatedDatas");
 
                             b1.WithOwner()
-                                .HasForeignKey("CalculatedDataId");
+                                .HasForeignKey("CalculatedDataTimestamp");
                         });
 
                     b.OwnsOne("rdds.api.Models.InternationalRoughnessIndex", "IRI", b1 =>
                         {
-                            b1.Property<Guid>("CalculatedDataId")
-                                .HasColumnType("uuid");
+                            b1.Property<DateTimeOffset>("CalculatedDataTimestamp")
+                                .HasColumnType("timestamp with time zone");
 
                             b1.Property<float>("Average")
                                 .HasColumnType("real")
@@ -538,12 +530,12 @@ namespace rdds.api.Migrations
                                 .HasColumnType("text")
                                 .HasColumnName("Roll_Profile");
 
-                            b1.HasKey("CalculatedDataId");
+                            b1.HasKey("CalculatedDataTimestamp");
 
                             b1.ToTable("CalculatedDatas");
 
                             b1.WithOwner()
-                                .HasForeignKey("CalculatedDataId");
+                                .HasForeignKey("CalculatedDataTimestamp");
                         });
 
                     b.Navigation("Attempt");
@@ -575,8 +567,8 @@ namespace rdds.api.Migrations
 
                     b.OwnsOne("rdds.api.Models.Coordinate", "Coordinate", b1 =>
                         {
-                            b1.Property<Guid>("RoadDataId")
-                                .HasColumnType("uuid");
+                            b1.Property<DateTimeOffset>("RoadDataTimestamp")
+                                .HasColumnType("timestamp with time zone");
 
                             b1.Property<float>("Latitude")
                                 .HasColumnType("real")
@@ -586,12 +578,12 @@ namespace rdds.api.Migrations
                                 .HasColumnType("real")
                                 .HasColumnName("Longitude");
 
-                            b1.HasKey("RoadDataId");
+                            b1.HasKey("RoadDataTimestamp");
 
                             b1.ToTable("RoadDatas");
 
                             b1.WithOwner()
-                                .HasForeignKey("RoadDataId");
+                                .HasForeignKey("RoadDataTimestamp");
                         });
 
                     b.Navigation("Attempt");

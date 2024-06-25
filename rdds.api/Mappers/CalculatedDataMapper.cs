@@ -14,7 +14,6 @@ namespace rdds.api.Mappers
         {
             return new CalculatedDataDto
             {
-                Id = calculatedData.Id,
                 IRI = new InternationalRoughnessIndex
                 {
                     Roll = calculatedData.IRI.Roll,
