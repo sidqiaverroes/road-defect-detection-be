@@ -58,12 +58,12 @@ namespace rdds.api.Services.MQTT
                     }
                     
                     // Handle "Start", regular payloads, and "End"
-                    if (payload == "Start")
+                    if (payload == "start")
                     {
                         await HandleStartMessage(deviceMac);
                         _logger.LogWarning($"Received payload START");
                     }
-                    else if (payload == "End")
+                    else if (payload == "end")
                     {
                         await HandleEndMessage(deviceMac);
                     }
