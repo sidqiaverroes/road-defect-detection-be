@@ -40,10 +40,9 @@ namespace rdds.api.Data
                     new Permission { Id = 102, Name = "Get Admin Profile" },
                     new Permission { Id = 103, Name = "Get User By Id" },
                     new Permission { Id = 104, Name = "Register" },
-                    new Permission { Id = 105, Name = "Login" },
-                    new Permission { Id = 106, Name = "Update Admin" },
-                    new Permission { Id = 107, Name = "Update User" },
-                    new Permission { Id = 108, Name = "Delete User" },
+                    new Permission { Id = 105, Name = "Update Admin" },
+                    new Permission { Id = 106, Name = "Update User" },
+                    new Permission { Id = 107, Name = "Delete User" },
                     // Device
                     new Permission { Id = 201, Name = "Get All Devices" },
                     new Permission { Id = 202, Name = "Get Device By Id" },

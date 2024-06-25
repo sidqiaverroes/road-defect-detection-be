@@ -112,6 +112,7 @@ builder.Services.AddScoped<IRoadDataRepository, RoadDataRepository>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IRoadCategoryRepository, RoadCategoryRepository>();
 builder.Services.AddScoped<ICalculatedDataRepository, CalculatedDataRepository>();
+builder.Services.AddScoped<IAttemptSummaryData, AttemptSummaryDataRepository>();
 builder.Services.AddSingleton<ITokenBlacklistService, TokenBlacklistService>();
 builder.Services.AddSingleton<CalculationService>();
 builder.Services.AddSingleton(sp =>

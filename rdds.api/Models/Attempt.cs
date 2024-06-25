@@ -19,6 +19,8 @@ namespace rdds.api.Models
         public Device Device { get; set; }
         public int? RoadCategoryId { get; set; }
         public RoadCategory? RoadCategory { get; set; }
+        public string? SummaryId {get; set;}
+        public AttemptSummaryData? SummaryData { get; set; }
 
         public List<RoadData> RoadDatas { get; set; } = new List<RoadData>();
         public List<CalculatedData> CalculatedDatas { get; set; } = new List<CalculatedData>();

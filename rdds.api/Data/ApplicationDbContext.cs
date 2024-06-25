@@ -23,6 +23,7 @@ namespace rdds.api.Data
         public DbSet<RoadCategory> RoadCategories { get; set; }
         public DbSet<Permission> Permissions { get; set; }
         public DbSet<UserPermission> UserPermissions { get; set; }
+        public DbSet<AttemptSummaryData> AttemptSummaryDatas { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -121,6 +122,31 @@ namespace rdds.api.Data
             .WithOne(a => a.RoadCategory)
             .HasForeignKey(a => a.RoadCategoryId)
             .OnDelete(DeleteBehavior.SetNull);
+
+            builder.Entity<AttemptSummaryData>()
+            .OwnsOne(rd => rd.LengthData, coord =>
+            {
+                coord.Property(c => c.Baik).HasColumnName("RoadLength_Baik");
+                coord.Property(c => c.Sedang).HasColumnName("RoadLength_Sedang");
+                coord.Property(c => c.RusakRingan).HasColumnName("RoadLength_RusakRingan");
+                coord.Property(c => c.RusakBerat).HasColumnName("RoadLength_RusakBerat");
+            });
+
+            builder.Entity<AttemptSummaryData>()
+            .OwnsOne(rd => rd.PercentageData, coord =>
+            {
+                coord.Property(c => c.Baik).HasColumnName("Percent_Baik");
+                coord.Property(c => c.Sedang).HasColumnName("Percent_Sedang");
+                coord.Property(c => c.RusakRingan).HasColumnName("Percent_RusakRingan");
+                coord.Property(c => c.RusakBerat).HasColumnName("Percent_RusakBerat");
+            });
+
+            builder.Entity<AttemptSummaryData>()
+            .HasOne(asd => asd.Attempt)
+            .WithOne(a => a.SummaryData) // Assuming Attempt has navigation property AttemptSummaryData
+            .HasForeignKey<AttemptSummaryData>(asd => asd.AttemptId)
+            .IsRequired()
+            .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }
