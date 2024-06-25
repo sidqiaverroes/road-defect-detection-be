@@ -44,6 +44,7 @@ namespace rdds.api.Repositories
         {
             return await _context.Devices.Where(u => u.AppUserId == userId)
                 .Include(a => a.Attempts)
+                .ThenInclude(a => a.RoadCategory)
                 .Include(a => a.AppUser)
                 .ToListAsync();
         }
