@@ -253,12 +253,6 @@ namespace rdds.api.Services.MQTT
                     int samplingFrequency = 50;
                     InternationalRoughnessIndex IRIData = CalculateIRI(roadDataList, samplingFrequency);
 
-                    // Save road data
-                    await _roadDataRepo.CreateFromMqttAsync(sensorDataList, attemptId);
-
-                    // Save calculated data
-                    await _calculatedDataRepo.CreateFromMqttAsync(sensorDataList, IRIData, attemptId);
-
                     //Generate json websocket payload
                     var payloadList = new List<WebsocketPayload>();
                     foreach(var p in sensorDataList)
@@ -283,9 +277,14 @@ namespace rdds.api.Services.MQTT
 
                     var websocketPayload = JsonSerializer.Serialize(payloadList);
                     
-
                     //Send to Websocket
                     await SendToWebSocketTopicAsync(deviceId, attemptId.ToString(), websocketPayload);
+
+                    // Save road data
+                    await _roadDataRepo.CreateFromMqttAsync(sensorDataList, attemptId);
+
+                    // Save calculated data
+                    await _calculatedDataRepo.CreateFromMqttAsync(sensorDataList, IRIData, attemptId);
                     
                 }
             }
