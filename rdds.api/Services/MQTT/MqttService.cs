@@ -457,7 +457,7 @@ namespace rdds.api.Services.MQTT
             }
         }
 
-        public async Task HandleWebSocketAsync(WebSocket webSocket, string deviceId, string attemptId)
+        public async Task HandleWebSocketAsync(WebSocket webSocket, string deviceId)
         {
             var topic = $"{deviceId}";
             RegisterWebSocketForTopic(webSocket, topic);

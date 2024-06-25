@@ -21,12 +21,12 @@ namespace rdds.api.Controllers
         }
 
         [HttpGet]
-        public async Task Get([FromRoute] string deviceId, [FromRoute] string attemptId)
+        public async Task Get([FromRoute] string deviceId)
         {
             if (HttpContext.WebSockets.IsWebSocketRequest)
             {
                 using var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
-                await _mqttService.HandleWebSocketAsync(webSocket, deviceId, attemptId);
+                await _mqttService.HandleWebSocketAsync(webSocket, deviceId);
             }
             else
             {
