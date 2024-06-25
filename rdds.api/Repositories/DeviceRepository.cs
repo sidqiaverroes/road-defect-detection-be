@@ -53,6 +53,7 @@ namespace rdds.api.Repositories
         {
             return await _context.Devices
                 .Include(a => a.Attempts)
+                .ThenInclude(a => a.RoadCategory)
                 .Include(a => a.AppUser)
                 .FirstOrDefaultAsync(m => m.MacAddress == mac);
         }
