@@ -31,17 +31,23 @@ namespace rdds.api.Mappers
                     Latitude = calculatedData.Coordinate.Latitude,
                     Longitude = calculatedData.Coordinate.Longitude
                 },
-                Timestamp = calculatedData.Timestamp.ToString("yyyy-MM-dd HH:mm:ss.ff"),
+                Timestamp = calculatedData.Timestamp.ToString(),
                 AttemptId = calculatedData.AttemptId
             };
         }
 
         public static CalculatedData ToCalculatedDataFromCreate(this CreateCalculatedDataDto calculatedDataDto, int attemptId)
         {
-            DateTime timestamp;
-            if (!DateTime.TryParseExact(calculatedDataDto.Timestamp, "yyyy-MM-dd HH:mm:ss.ff", CultureInfo.InvariantCulture, DateTimeStyles.None, out timestamp))
+            string[] formats = new string[] { 
+                "yyyy-MM-dd HH:mm:ss.f",    // For milliseconds with one decimal place
+                "yyyy-MM-dd HH:mm:ss.ff",   // For milliseconds with two decimal places
+                "yyyy-MM-dd HH:mm:ss.fff"   // For milliseconds with three decimal places
+            };
+
+            // Attempt to parse the timestamp
+            if (!DateTime.TryParseExact(calculatedDataDto.Timestamp, formats, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime timestamp))
             {
-                throw new ArgumentException($"Invalid timestamp format: {calculatedDataDto.Timestamp}. Expected format: yyyy-MM-dd HH:mm:ss.ff");
+                throw new ArgumentException($"Invalid timestamp format: {calculatedDataDto.Timestamp}. Expected format: yyyy-MM-dd HH:mm:ss.f, yyyy-MM-dd HH:mm:ss.ff, or yyyy-MM-dd HH:mm:ss.fff");
             }
 
             return new CalculatedData

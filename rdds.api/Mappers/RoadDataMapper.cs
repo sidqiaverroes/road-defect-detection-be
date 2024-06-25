@@ -31,11 +31,16 @@ namespace rdds.api.Mappers
         public static RoadData ToRoadDataFromCreate(this CreateRoadDataDto roadDataDto, int attemptId)
         {
             // Convert Timestamp string to DateTime
-            DateTime timestamp;
-            // Attempt to parse the timestamp string to DateTime using specific format
-            if (!DateTime.TryParseExact(roadDataDto.Timestamp, "yyyy-MM-dd HH:mm:ss.ff", CultureInfo.InvariantCulture, DateTimeStyles.None, out timestamp))
+            string[] formats = new string[] { 
+                "yyyy-MM-dd HH:mm:ss.f",    // For milliseconds with one decimal place
+                "yyyy-MM-dd HH:mm:ss.ff",   // For milliseconds with two decimal places
+                "yyyy-MM-dd HH:mm:ss.fff"   // For milliseconds with three decimal places
+            };
+
+            // Attempt to parse the timestamp
+            if (!DateTime.TryParseExact(roadDataDto.Timestamp, formats, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime timestamp))
             {
-                throw new ArgumentException($"Invalid timestamp format: {roadDataDto.Timestamp}. Expected format: yyyy-MM-dd HH:mm:ss.ff");
+                throw new ArgumentException($"Invalid timestamp format: {roadDataDto.Timestamp}. Expected format: yyyy-MM-dd HH:mm:ss.f, yyyy-MM-dd HH:mm:ss.ff, or yyyy-MM-dd HH:mm:ss.fff");
             }
 
 
