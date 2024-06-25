@@ -99,8 +99,8 @@ namespace rdds.api.Controllers
         }
 
         
-        // [ApiExplorerSettings(IgnoreApi = true)]
-        // [Authorize]
+        [ApiExplorerSettings(IgnoreApi = true)]
+        [Authorize]
         [HttpPost("{attemptId}")]
         public async Task<ActionResult> CreateAsync([FromRoute] int attemptId, [FromBody] IEnumerable<CreateRoadDataDto> roadDataDtos)
         {
