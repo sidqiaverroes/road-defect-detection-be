@@ -22,7 +22,7 @@ namespace rdds.api.Mappers
                 FinishedOn = attemptModel.FinishedOn,
                 DeviceId = attemptModel.DeviceId,
                 RoadCategoryId = attemptModel.RoadCategoryId,
-                RoadCategoryName = attemptModel.RoadCategory.Name
+                RoadCategoryName = attemptModel.RoadCategory?.Name ?? string.Empty
             };
         }
 
