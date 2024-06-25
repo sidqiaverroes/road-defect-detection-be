@@ -53,10 +53,17 @@ namespace rdds.api.Data
             });
 
             builder.Entity<CalculatedData>()
-            .OwnsOne(cd => cd.Coordinate, coord =>
+            .OwnsOne(cd => cd.CoordinateStart, coord =>
             {
-                coord.Property(c => c.Latitude).HasColumnName("Latitude");
-                coord.Property(c => c.Longitude).HasColumnName("Longitude");
+                coord.Property(c => c.Latitude).HasColumnName("LatitudeStart");
+                coord.Property(c => c.Longitude).HasColumnName("LongitudeStart");
+            });
+
+            builder.Entity<CalculatedData>()
+            .OwnsOne(cd => cd.CoordinateEnd, coord =>
+            {
+                coord.Property(c => c.Latitude).HasColumnName("LatitudeEnd");
+                coord.Property(c => c.Longitude).HasColumnName("LongitudeEnd");
             });
 
             builder.Entity<CalculatedData>()

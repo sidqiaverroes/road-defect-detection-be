@@ -332,24 +332,25 @@ namespace rdds.api.Controllers
             {
                 return BadRequest("You are not authorized.");
             }
+
             var AppUser = await _userManager.FindByNameAsync(username);
 
             // Authorization of User Permission
-            if(User.IsInRole("User") && AppUser != null)
+            if (User.IsInRole("User") && AppUser != null)
             {
                 var authUser = await _accountRepo.GetUserByIdAsync(AppUser.Id);
                 var permissions = authUser.UserPermissions.Select(up => up.Permission.Id).ToList();
                 var isAuthorized = permissions.Any(p => p == 705);
-                if(!isAuthorized){
+                if (!isAuthorized)
+                {
                     return Unauthorized("You don't have permission.");
                 }
             }
 
-
             try
             {
                 // Retrieve all CalculatedData for the given AttemptId
-                var calculatedDataList = await _calculatedDataRepository.GetAllByFilterAsync(attemptId, "" , "");
+                var calculatedDataList = await _calculatedDataRepository.GetAllByFilterAsync(attemptId, "", "");
 
                 if (calculatedDataList == null || calculatedDataList.Count == 0)
                 {
@@ -367,37 +368,32 @@ namespace rdds.api.Controllers
                 double totalLength = 0;
                 double baikLength = 0, sedangLength = 0, rusakRinganLength = 0, rusakBeratLength = 0;
 
-                for (int i = 0; i < calculatedDataList.Count - 1; i++)
+                // Calculate lengths and total length based on IRI values
+                foreach (var data in calculatedDataList)
                 {
-                    var current = calculatedDataList[i];
-                    var next = calculatedDataList[i + 1];
+                    var distance = CalculateDistance(
+                        data.CoordinateStart.Latitude,
+                        data.CoordinateStart.Longitude,
+                        data.CoordinateEnd.Latitude,
+                        data.CoordinateEnd.Longitude);
 
-                    // Calculate distance between consecutive coordinates
-                    double distance = CalculateDistance(
-                        current.Coordinate.Latitude,
-                        current.Coordinate.Longitude,
-                        next.Coordinate.Latitude,
-                        next.Coordinate.Longitude);
-
-                    // Update total length
                     totalLength += distance;
 
                     // Update profile lengths based on IRI values
-                    if (current.IRI.EuclideanProfile == "Rusak Berat")
+                    switch (data.IRI.EuclideanProfile)
                     {
-                        rusakBeratLength += distance;
-                    }
-                    else if (current.IRI.EuclideanProfile == "Rusak Ringan")
-                    {
-                        rusakRinganLength += distance;
-                    }
-                    else if (current.IRI.EuclideanProfile == "Sedang")
-                    {
-                        sedangLength += distance;
-                    }
-                    else
-                    {
-                        baikLength += distance;
+                        case "Rusak Berat":
+                            rusakBeratLength += distance;
+                            break;
+                        case "Rusak Ringan":
+                            rusakRinganLength += distance;
+                            break;
+                        case "Sedang":
+                            sedangLength += distance;
+                            break;
+                        default:
+                            baikLength += distance;
+                            break;
                     }
                 }
 
@@ -414,12 +410,13 @@ namespace rdds.api.Controllers
                 // Calculate percentage data
                 summaryData.PercentageData = new PercentageData
                 {
-                    Baik = baikLength / totalLength * 100,
-                    Sedang = sedangLength / totalLength * 100,
-                    RusakRingan = rusakRinganLength / totalLength * 100,
-                    RusakBerat = rusakBeratLength / totalLength * 100
+                    Baik = totalLength == 0 ? 0 : baikLength / totalLength * 100,
+                    Sedang = totalLength == 0 ? 0 : sedangLength / totalLength * 100,
+                    RusakRingan = totalLength == 0 ? 0 : rusakRinganLength / totalLength * 100,
+                    RusakBerat = totalLength == 0 ? 0 : rusakBeratLength / totalLength * 100
                 };
 
+                // Create the summary data in the repository
                 var createdSumData = await _attemptSumDataRepository.CreateAsync(summaryData);
 
                 return Ok(createdSumData);

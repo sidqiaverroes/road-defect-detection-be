@@ -40,32 +40,40 @@ namespace rdds.api.Repositories
         {
             try
             {
-                var calculatedDataList = new List<CreateCalculatedDataDto>();
-
-                foreach (var sensorData in sensorDataList)
+                if (sensorDataList == null || sensorDataList.Count == 0)
                 {
-                    // Map SensorData to RoadData
-                    var calcualtedData = new CreateCalculatedDataDto
-                    {
-                        IRI = IRI,
-                        Velocity = sensorData.velocity,
-                        Coordinate = new Coordinate
-                        {
-                            Latitude = sensorData.latitude,
-                            Longitude = sensorData.longitude,
-                        },
-                        Timestamp = sensorData.timestamp,
-                        AttemptId = attemptId
-                    };
-
-                    calculatedDataList.Add(calcualtedData);
+                    throw new ArgumentException("Sensor data list cannot be null or empty.");
                 }
 
-                // Convert CreateRoadDataDto to RoadData entities
-                var calculatedDataModels = calculatedDataList.Select(dto => dto.ToCalculatedDataFromCreate(attemptId)).ToList();
+                // Calculate average velocity
+                float totalVelocity = sensorDataList.Sum(sd => sd.velocity);
+                float averageVelocity = totalVelocity / sensorDataList.Count;
 
-                // Add range of roadDataModels to context and save changes
-                await _context.CalculatedDatas.AddRangeAsync(calculatedDataModels);
+                // Get the first and last sensor data to determine start and end coordinates
+                var firstSensorData = sensorDataList.First();
+                var lastSensorData = sensorDataList.Last();
+
+                // Create CalculatedData entity with start and end coordinates
+                var calculatedData = new CalculatedData
+                {
+                    IRI = IRI,
+                    Velocity = averageVelocity,
+                    CoordinateStart = new Coordinate
+                    {
+                        Latitude = firstSensorData.latitude,
+                        Longitude = firstSensorData.longitude
+                    },
+                    CoordinateEnd = new Coordinate
+                    {
+                        Latitude = lastSensorData.latitude,
+                        Longitude = lastSensorData.longitude
+                    },
+                    Timestamp = DateTime.Now, // Assuming the timestamp of the first sensor data
+                    AttemptId = attemptId
+                };
+
+                // Add CalculatedData entity to context and save changes
+                await _context.CalculatedDatas.AddAsync(calculatedData);
                 await _context.SaveChangesAsync();
             }
             catch (Exception)
@@ -73,6 +81,7 @@ namespace rdds.api.Repositories
                 throw;
             }
         }
+
 
         public async Task<bool> DeleteAllAsync()
         {

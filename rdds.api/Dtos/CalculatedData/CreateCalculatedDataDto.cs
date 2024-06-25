@@ -10,7 +10,8 @@ namespace rdds.api.Dtos.CalculatedData
     {
         public InternationalRoughnessIndex IRI { get; set; }
         public float Velocity { get; set; }
-        public Coordinate Coordinate { get; set; }
+        public Coordinate CoordinateStart { get; set; }
+        public Coordinate CoordinateEnd { get; set; }
         public string? Timestamp { get; set; }
         public int? AttemptId { get; set; }
     }

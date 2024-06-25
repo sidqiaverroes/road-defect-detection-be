@@ -26,10 +26,15 @@ namespace rdds.api.Mappers
                     AverageProfile = calculatedData.IRI.AverageProfile,
                 },
                 Velocity = calculatedData.Velocity,
-                Coordinate = new Coordinate
+                CoordinateStart = new Coordinate
                 {
-                    Latitude = calculatedData.Coordinate.Latitude,
-                    Longitude = calculatedData.Coordinate.Longitude
+                    Latitude = calculatedData.CoordinateStart.Latitude,
+                    Longitude = calculatedData.CoordinateStart.Longitude
+                },
+                CoordinateEnd = new Coordinate
+                {
+                    Latitude = calculatedData.CoordinateEnd.Latitude,
+                    Longitude = calculatedData.CoordinateStart.Longitude
                 },
                 Timestamp = calculatedData.Timestamp.ToString(),
                 AttemptId = calculatedData.AttemptId
@@ -64,10 +69,15 @@ namespace rdds.api.Mappers
                     AverageProfile = calculatedDataDto.IRI.AverageProfile,
                 },
                 Velocity = calculatedDataDto.Velocity,
-                Coordinate = new Coordinate
+                CoordinateStart = new Coordinate
                 {
-                    Latitude = calculatedDataDto.Coordinate.Latitude,
-                    Longitude = calculatedDataDto.Coordinate.Longitude
+                    Latitude = calculatedDataDto.CoordinateStart.Latitude,
+                    Longitude = calculatedDataDto.CoordinateStart.Longitude
+                },
+                CoordinateEnd = new Coordinate
+                {
+                    Latitude = calculatedDataDto.CoordinateEnd.Latitude,
+                    Longitude = calculatedDataDto.CoordinateStart.Longitude
                 },
                 Timestamp = timestamp,
                 AttemptId = attemptId
