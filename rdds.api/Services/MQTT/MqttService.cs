@@ -423,7 +423,7 @@ namespace rdds.api.Services.MQTT
         public async Task SendToWebSocketTopicAsync(string deviceId, string attemptId, string payload)
         {
             try{
-                var topic = $"{deviceId}/{attemptId}";
+                var topic = $"{deviceId}";
 
                 if (_topicToWebSocketsMap.TryGetValue(topic, out var webSockets))
                 {
@@ -459,7 +459,7 @@ namespace rdds.api.Services.MQTT
 
         public async Task HandleWebSocketAsync(WebSocket webSocket, string deviceId, string attemptId)
         {
-            var topic = $"{deviceId}/{attemptId}";
+            var topic = $"{deviceId}";
             RegisterWebSocketForTopic(webSocket, topic);
 
             var buffer = new byte[1024 * 4];
