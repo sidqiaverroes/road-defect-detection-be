@@ -4,9 +4,11 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using rdds.api.Data;
 using rdds.api.Dtos.SummaryData;
+using rdds.api.Extensions;
 using rdds.api.Interfaces;
 using rdds.api.Mappers;
 using rdds.api.Models;
@@ -21,12 +23,16 @@ namespace rdds.api.Controllers
         private readonly ICalculatedDataRepository _calculatedDataRepository;
         private readonly IAttemptSummaryData _attemptSumDataRepository;
         private readonly IRoadCategoryRepository _roadCategoryRepository;
+        private readonly UserManager<AppUser> _userManager;
+        private readonly IAccountRepository _accountRepo;
 
-        public SummaryDataController(ICalculatedDataRepository calculatedDataRepository, IAttemptSummaryData attemptSumDataRepository, IRoadCategoryRepository roadCategoryRepository)
+        public SummaryDataController(ICalculatedDataRepository calculatedDataRepository, IAttemptSummaryData attemptSumDataRepository, IRoadCategoryRepository roadCategoryRepository, UserManager<AppUser> userManager, IAccountRepository accountRepo)
         {
             _calculatedDataRepository = calculatedDataRepository;
             _attemptSumDataRepository = attemptSumDataRepository;
             _roadCategoryRepository = roadCategoryRepository;
+            _userManager = userManager;
+            _accountRepo = accountRepo;
         }
         
         [EnableCors]
@@ -34,6 +40,24 @@ namespace rdds.api.Controllers
         [HttpGet]
         public async Task<IActionResult> GetSummaries()
         {
+            var username = User.GetUsername();
+            if (username == null)
+            {
+                return BadRequest("You are not authorized.");
+            }
+            var AppUser = await _userManager.FindByNameAsync(username);
+
+            // Authorization of User Permission
+            if(User.IsInRole("User") && AppUser != null)
+            {
+                var authUser = await _accountRepo.GetUserByIdAsync(AppUser.Id);
+                var permissions = authUser.UserPermissions.Select(up => up.Permission.Id).ToList();
+                var isAuthorized = permissions.Any(p => p == 701);
+                if(!isAuthorized){
+                    return Unauthorized("You don't have permission.");
+                }
+            }
+
             try
             {
                 var summaries = await _attemptSumDataRepository.GetAllAsync();
@@ -51,6 +75,24 @@ namespace rdds.api.Controllers
         [HttpGet("all")]
         public async Task<IActionResult> GetAllSummaries()
         {
+            var username = User.GetUsername();
+            if (username == null)
+            {
+                return BadRequest("You are not authorized.");
+            }
+            var AppUser = await _userManager.FindByNameAsync(username);
+
+            // Authorization of User Permission
+            if(User.IsInRole("User") && AppUser != null)
+            {
+                var authUser = await _accountRepo.GetUserByIdAsync(AppUser.Id);
+                var permissions = authUser.UserPermissions.Select(up => up.Permission.Id).ToList();
+                var isAuthorized = permissions.Any(p => p == 702);
+                if(!isAuthorized){
+                    return Unauthorized("You don't have permission.");
+                }
+            }
+
             try
             {
                 // Retrieve all AttemptSummaryData
@@ -142,6 +184,24 @@ namespace rdds.api.Controllers
         [HttpGet("device/{deviceId}")]
         public async Task<IActionResult> GetDeviceSummary([FromRoute] string deviceId)
         {
+            var username = User.GetUsername();
+            if (username == null)
+            {
+                return BadRequest("You are not authorized.");
+            }
+            var AppUser = await _userManager.FindByNameAsync(username);
+
+            // Authorization of User Permission
+            if(User.IsInRole("User") && AppUser != null)
+            {
+                var authUser = await _accountRepo.GetUserByIdAsync(AppUser.Id);
+                var permissions = authUser.UserPermissions.Select(up => up.Permission.Id).ToList();
+                var isAuthorized = permissions.Any(p => p == 703);
+                if(!isAuthorized){
+                    return Unauthorized("You don't have permission.");
+                }
+            }
+
             try
             {
                 // Retrieve all AttemptSummaryData for the given DeviceId
@@ -225,8 +285,26 @@ namespace rdds.api.Controllers
         [EnableCors]
         [Authorize]
         [HttpGet("attempt/{attemptId}")]
-        public async Task<IActionResult> GetSummaryByAttemptId(int attemptId)
+        public async Task<IActionResult> GetAttemptSummary(int attemptId)
         {
+            var username = User.GetUsername();
+            if (username == null)
+            {
+                return BadRequest("You are not authorized.");
+            }
+            var AppUser = await _userManager.FindByNameAsync(username);
+
+            // Authorization of User Permission
+            if(User.IsInRole("User") && AppUser != null)
+            {
+                var authUser = await _accountRepo.GetUserByIdAsync(AppUser.Id);
+                var permissions = authUser.UserPermissions.Select(up => up.Permission.Id).ToList();
+                var isAuthorized = permissions.Any(p => p == 704);
+                if(!isAuthorized){
+                    return Unauthorized("You don't have permission.");
+                }
+            }
+
             try
             {
                 var summary = await _attemptSumDataRepository.GetByAttemptIdAsync(attemptId);
@@ -249,6 +327,25 @@ namespace rdds.api.Controllers
         [HttpPost("{attemptId}")]
         public async Task<IActionResult> CreateSummary([FromRoute] int attemptId)
         {
+            var username = User.GetUsername();
+            if (username == null)
+            {
+                return BadRequest("You are not authorized.");
+            }
+            var AppUser = await _userManager.FindByNameAsync(username);
+
+            // Authorization of User Permission
+            if(User.IsInRole("User") && AppUser != null)
+            {
+                var authUser = await _accountRepo.GetUserByIdAsync(AppUser.Id);
+                var permissions = authUser.UserPermissions.Select(up => up.Permission.Id).ToList();
+                var isAuthorized = permissions.Any(p => p == 705);
+                if(!isAuthorized){
+                    return Unauthorized("You don't have permission.");
+                }
+            }
+
+
             try
             {
                 // Retrieve all CalculatedData for the given AttemptId

@@ -12,6 +12,7 @@ namespace rdds.api.Interfaces
         Task<List<UserDto>> GetAllAsync();
         Task UpdateUserPermissionsAsync(string userId, List<int> permissionIds);
         Task<AppUser> GetUserByIdAsync(string userId);
+        Task<AppUser> GetUserByUsernameAsync(string username);
 
     }
 }

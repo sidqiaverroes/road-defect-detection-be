@@ -87,6 +87,33 @@ namespace rdds.api.Controllers
         }
 
         [EnableCors]
+        [Authorize]
+        [HttpGet("profile")]
+        public async Task<IActionResult> GetProfile()
+        {
+            // Retrieve the username from the user claims
+            var username = User.GetUsername();
+            
+            // If username is null, return a bad request response
+            if (username == null)
+            {
+                return BadRequest("You are not authorized.");
+            }
+
+            // Retrieve the user by username
+            var user = await _accountRepo.GetUserByUsernameAsync(username);
+
+            // If user is not found, return a not found response
+            if (user == null)
+            {
+                return NotFound("User not found");
+            }
+
+            // Convert the user entity to a UserDto and return it in the response
+            return Ok(user.ToUserDto());
+        }
+
+        [EnableCors]
         [Authorize("Admin")]
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto registerDto)

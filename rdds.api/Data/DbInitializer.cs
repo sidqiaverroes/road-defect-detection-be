@@ -64,7 +64,13 @@ namespace rdds.api.Data
                     new Permission { Id = 602, Name = "Get Road Category By Id" },
                     new Permission { Id = 603, Name = "Create Road Category" },
                     new Permission { Id = 604, Name = "Update Road Category" },
-                    new Permission { Id = 605, Name = "Delete Road Category" }
+                    new Permission { Id = 605, Name = "Delete Road Category" },
+                    //Summary
+                    new Permission { Id = 701, Name = "Get All Summaries" },
+                    new Permission { Id = 702, Name = "Get Summary of All" },
+                    new Permission { Id = 703, Name = "Get Summary of Device" },
+                    new Permission { Id = 704, Name = "Get Summary of Attempt" },
+                    new Permission { Id = 705, Name = "Generate Summary" }
                     
                 };
 

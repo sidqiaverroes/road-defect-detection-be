@@ -59,6 +59,20 @@ namespace rdds.api.Repositories
             return user;
         }
 
+        public async Task<AppUser> GetUserByUsernameAsync(string username)
+        {
+            var user = await _context.Users
+                .Include(u => u.UserPermissions) // Include UserPermissions navigation property
+                .ThenInclude(up => up.Permission) // Include Permission navigation property
+                .FirstOrDefaultAsync(u => u.UserName == username);
+            if (user == null)
+            {
+                return null;
+            }
+
+            return user;
+        }
+
         public async Task UpdateUserPermissionsAsync(string userId, List<int> permissionIds)
         {
             var user = await _context.Users
