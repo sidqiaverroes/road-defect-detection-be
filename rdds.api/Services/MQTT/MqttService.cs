@@ -27,7 +27,7 @@ namespace rdds.api.Services.MQTT
         private readonly Dictionary<string, List<WebSocket>> _topicToWebSocketsMap;
         private readonly Dictionary<string, List<string>> _payloadBuffer = new Dictionary<string, List<string>>();
         private static readonly SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
-        private const int MaxBufferCount = 1;
+        private const int MaxBufferCount = 3;
         private bool _handlingStartMessage = false;
 
         public MqttService(ILogger<MqttService> logger, HiveMQClient mqttClient, IServiceScopeFactory scopeFactory, CalculationService calculationService)
@@ -310,9 +310,9 @@ namespace rdds.api.Services.MQTT
                 var (pitchFrequencies, pitchPsd) = _calculationService.CalculatePSD(pitchData, samplingFrequency);
                 var (euclideanFrequencies, euclideanPsd) = _calculationService.CalculatePSD(euclideanData, samplingFrequency);
                 // _logger.LogError($"PSD DATAAAAA: {rollFrequencies.Length}, {rollPsd.Length}");
-                var iriRoll = _calculationService.CalculateIRI(rollPsd, rollFrequencies);
-                var iriPitch = _calculationService.CalculateIRI(pitchPsd, pitchFrequencies);
-                var iriEuclidean = _calculationService.CalculateIRI(euclideanPsd, euclideanFrequencies);
+                var iriRoll = _calculationService.CalculateIRI(rollPsd, rollFrequencies)*2.5;
+                var iriPitch = _calculationService.CalculateIRI(pitchPsd, pitchFrequencies)*2.5;
+                var iriEuclidean = _calculationService.CalculateIRI(euclideanPsd, euclideanFrequencies)*2.5;
                 var iriAverage = (iriRoll + iriPitch + iriEuclidean) / 3;
 
                 var IRI = new InternationalRoughnessIndex

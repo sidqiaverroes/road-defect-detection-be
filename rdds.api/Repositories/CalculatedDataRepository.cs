@@ -134,6 +134,8 @@ namespace rdds.api.Repositories
             {
                 query = query.Where(cd => cd.Timestamp.Date <= endDateTime.Value);
             }
+            
+            query = query.OrderBy(cd => cd.Timestamp);
 
             var calculatedDataList = await query.ToListAsync();
 

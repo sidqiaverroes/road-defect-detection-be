@@ -99,6 +99,8 @@ namespace rdds.api.Repositories
                 query = query.Where(rd => rd.Timestamp.Date <= endDateTime.Value);
             }
 
+            query = query.OrderBy(cd => cd.Timestamp);
+
             var roadDataList = await query.ToListAsync();
 
             return roadDataList;
