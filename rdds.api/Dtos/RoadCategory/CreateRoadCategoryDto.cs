@@ -8,7 +8,6 @@ namespace rdds.api.Dtos.RoadCategory
     public class CreateRoadCategoryDto
     {
         public string Name { get; set; }
-        public float TotalLength { get; set; }
     }
 
 }

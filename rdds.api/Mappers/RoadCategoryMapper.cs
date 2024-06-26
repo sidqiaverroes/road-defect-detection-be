@@ -24,7 +24,6 @@ namespace rdds.api.Mappers
             return new RoadCategory
             {
                 Name = dto.Name,
-                TotalLength = dto.TotalLength
             };
         }
 
