@@ -57,6 +57,13 @@ namespace rdds.api.Repositories
                 .ToListAsync();
         }
 
+        public async Task<AttemptSummaryData> UpdateAsync(AttemptSummaryData summaryData)
+        {
+            _context.AttemptSummaryDatas.Update(summaryData);
+            await _context.SaveChangesAsync();
+            return summaryData;
+        }
+
 
     }
 }

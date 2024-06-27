@@ -12,5 +12,7 @@ namespace rdds.api.Interfaces
         Task<List<AttemptSummaryData>> GetAllAsync();
         Task<AttemptSummaryData?> GetByAttemptIdAsync(int attemptId);
         Task<List<AttemptSummaryData>> GetAllByDeviceIdAsync(string deviceId);
+        Task<AttemptSummaryData> UpdateAsync(AttemptSummaryData summaryData);
+
     }
 }

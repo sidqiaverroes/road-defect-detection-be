@@ -325,7 +325,7 @@ namespace rdds.api.Controllers
         [EnableCors]
         [Authorize]
         [HttpPost("{attemptId}")]
-        public async Task<IActionResult> CreateSummary([FromRoute] int attemptId)
+        public async Task<IActionResult> CreateOrUpdateSummary([FromRoute] int attemptId)
         {
             var username = User.GetUsername();
             if (username == null)
@@ -333,12 +333,12 @@ namespace rdds.api.Controllers
                 return BadRequest("You are not authorized.");
             }
 
-            var AppUser = await _userManager.FindByNameAsync(username);
+            var appUser = await _userManager.FindByNameAsync(username);
 
             // Authorization of User Permission
-            if (User.IsInRole("User") && AppUser != null)
+            if (User.IsInRole("User") && appUser != null)
             {
-                var authUser = await _accountRepo.GetUserByIdAsync(AppUser.Id);
+                var authUser = await _accountRepo.GetUserByIdAsync(appUser.Id);
                 var permissions = authUser.UserPermissions.Select(up => up.Permission.Id).ToList();
                 var isAuthorized = permissions.Any(p => p == 705);
                 if (!isAuthorized)
@@ -346,7 +346,6 @@ namespace rdds.api.Controllers
                     return Unauthorized("You don't have permission.");
                 }
             }
-
             try
             {
                 // Retrieve all CalculatedData for the given AttemptId
@@ -416,16 +415,30 @@ namespace rdds.api.Controllers
                     RusakBerat = totalLength == 0 ? 0 : rusakBeratLength / totalLength * 100
                 };
 
-                // Create the summary data in the repository
-                var createdSumData = await _attemptSumDataRepository.CreateAsync(summaryData);
+                var currentSummary = await _attemptSumDataRepository.GetByAttemptIdAsync(attemptId);
+                if (currentSummary == null)
+                {
+                    // Create the summary data in the repository
+                    var createdSumData = await _attemptSumDataRepository.CreateAsync(summaryData);
+                    return Ok(createdSumData);
+                }
+                else
+                {
+                    // Update the existing summary data
+                    currentSummary.TotalLength = summaryData.TotalLength;
+                    currentSummary.LengthData = summaryData.LengthData;
+                    currentSummary.PercentageData = summaryData.PercentageData;
 
-                return Ok(createdSumData);
+                    var updatedSumData = await _attemptSumDataRepository.UpdateAsync(currentSummary);
+                    return Ok(updatedSumData);
+                }
             }
             catch (Exception ex)
             {
                 return StatusCode(500, $"Error creating summary: {ex.Message}");
             }
         }
+
 
         // Helper method to calculate distance between two coordinates
         private double CalculateDistance(double lat1, double lon1, double lat2, double lon2)
