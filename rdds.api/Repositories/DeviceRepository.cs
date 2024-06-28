@@ -40,9 +40,9 @@ namespace rdds.api.Repositories
             return deviceModel;
         }
 
-        public async Task<List<Device>> GetAllAsync(string userId)
+        public async Task<List<Device>> GetAllAsync()
         {
-            return await _context.Devices.Where(u => u.AppUserId == userId)
+            return await _context.Devices
                 .Include(a => a.Attempts)
                 .ThenInclude(a => a.RoadCategory)
                 .Include(a => a.AppUser)

@@ -56,7 +56,7 @@ namespace rdds.api.Controllers
                 }
             }
             
-            var devices = await _deviceRepo.GetAllAsync(AppUser.Id);
+            var devices = await _deviceRepo.GetAllAsync();
             var deviceDto = devices.Select(s => s.ToDeviceDto());
 
             return Ok(deviceDto);
