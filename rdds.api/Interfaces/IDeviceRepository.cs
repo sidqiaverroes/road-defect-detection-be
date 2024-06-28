@@ -9,7 +9,7 @@ namespace rdds.api.Interfaces
 {
     public interface IDeviceRepository
     {
-        Task<List<Device>> GetAllAsync(string userId);
+        Task<List<Device>> GetAllAsync();
         Task<Device?> GetByMacAddressAsync(string mac);
         Task<Device> CreateAsync(Device deviceModel);
         Task<Device?> UpdateAsync(string mac, Device deviceDto);
