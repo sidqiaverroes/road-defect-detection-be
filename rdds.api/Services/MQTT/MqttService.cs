@@ -182,6 +182,11 @@ namespace rdds.api.Services.MQTT
                     throw new Exception("no last attempt");
                 }
 
+                if(lastAttempt.IsFinished)
+                {
+                    throw new Exception("No on going attempt, cannot process data.");
+                }
+
                 var attemptId = lastAttempt.Id;
 
                 // Add payload to the buffer
